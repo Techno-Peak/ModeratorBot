@@ -16,6 +16,7 @@ class User(Base):
     is_admin = Column(Boolean, default=False)
     is_permission = Column(Boolean, default=False)
 
+
 class Group(Base):
     __tablename__ = "groups"
 
@@ -24,6 +25,7 @@ class Group(Base):
     title = Column(String, nullable=False)
     required_members = Column(Integer, default=0)
     required_channel = Column(BigInteger, nullable=True)
+    is_admin = Column(Boolean, default=False)
 
 # class Warning(Base):
 #     __tablename__ = "warnings"

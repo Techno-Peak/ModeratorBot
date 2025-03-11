@@ -13,11 +13,10 @@ async def on_startup(dispatcher: Dispatcher):
 
 
 async def main():
-    dp.include_router(blocked_words_router)
-    dp.include_router(channel_router)
-    dp.include_router(joined_router)
-    dp.include_router(link_router)
-    dp.include_router(required_members_router)
+    dp.include_router(admin_router)
+    dp.include_router(group_router)
+    dp.include_router(user_router)
+
 
     dp.startup.register(on_startup)
     await dp.start_polling(bot)
