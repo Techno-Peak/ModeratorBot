@@ -27,6 +27,12 @@ class Group(Base):
     required_channel = Column(BigInteger, nullable=True)
     is_admin = Column(Boolean, default=False)
 
+
+class BlockedWord(Base):
+    __tablename__ = "blocked_word"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    word = Column(String)
 # class Warning(Base):
 #     __tablename__ = "warnings"
 #
