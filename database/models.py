@@ -14,6 +14,7 @@ class User(Base):
     last_name = Column(String, nullable=True)
     is_admin = Column(Boolean, default=False)
     is_permission = Column(Boolean, default=False)
+    count = Column(Integer, default=0)
 
     @classmethod
     async def get_or_create(cls, chat_id: int, username: str = None, first_name: str = None, 
@@ -48,6 +49,40 @@ class Group(Base):
     required_members = Column(Integer, default=0)
     required_channel = Column(BigInteger, nullable=True)
     is_admin = Column(Boolean, default=False)
+    is_activate = Column(Boolean, default=False)
+
+    @classmethod
+    async def get_or_create(cls, chat_id: int, title: str = None):
+        async with AsyncSessionLocal() as session:
+            stmt = select(cls).where(cls.chat_id == chat_id)
+            result = await session.execute(stmt)
+            existing_user = result.scalars().first()
+
+            if existing_user:
+                return existing_user
+
+            new_group = cls(
+                chat_id=chat_id,
+                title=title
+            )
+            session.add(new_group)
+            await session.commit()
+            return new_group
+
+    async def activate(self):
+        async with AsyncSessionLocal() as session:
+            self.is_activate = False if self.is_activate else True
+            session.add(self)
+            await session.commit()
+            return self
+
+    @classmethod
+    async def _is_activate(cls, chat_id):
+        async with AsyncSessionLocal() as session:
+            stmt = select(cls).where(cls.chat_id == chat_id)
+            result = await session.execute(stmt)
+            _group = result.scalars().first()
+            return _group.is_activate
 
 
 class BlockedWord(Base):
@@ -55,40 +90,3 @@ class BlockedWord(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     word = Column(String)
-# class Warning(Base):
-#     __tablename__ = "warnings"
-#
-#     id = Column(Integer, primary_key=True, autoincrement=True)
-#     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"))
-#     group_id = Column(Integer, ForeignKey("groups.id", ondelete="CASCADE"))
-#     reason = Column(Text, nullable=False)
-#     warned_at = Column(TIMESTAMP, default=datetime.datetime.utcnow)
-#
-# class Ban(Base):
-#     __tablename__ = "bans"
-#
-#     id = Column(Integer, primary_key=True, autoincrement=True)
-#     user_id = Column(BigInteger, ForeignKey("users.id", ondelete="CASCADE"))
-#     group_id = Column(BigInteger, ForeignKey("groups.id", ondelete="CASCADE"))
-#     banned_by = Column(BigInteger, ForeignKey("users.id"))
-#     reason = Column(Text, nullable=True)
-#     banned_at = Column(TIMESTAMP, default=datetime.datetime.utcnow)
-#
-# class MessageLog(Base):
-#     __tablename__ = "messages"
-#
-#     id = Column(Integer, primary_key=True, autoincrement=True)
-#     user_id = Column(BigInteger, ForeignKey("users.id", ondelete="CASCADE"))
-#     group_id = Column(BigInteger, ForeignKey("groups.id", ondelete="CASCADE"))
-#     content = Column(Text, nullable=False)
-#     message_type = Column(String, nullable=False)  # spam, swearing, advertisement
-#     detected_at = Column(TIMESTAMP, default=datetime.datetime.utcnow)
-#
-# class InvitedUser(Base):
-#     __tablename__ = "invited_users"
-#
-#     id = Column(Integer, primary_key=True, autoincrement=True)
-#     inviter_id = Column(BigInteger, ForeignKey("users.id", ondelete="CASCADE"))
-#     invited_id = Column(BigInteger, ForeignKey("users.id", ondelete="CASCADE"))
-#     group_id = Column(BigInteger, ForeignKey("groups.id", ondelete="CASCADE"))
-#     invited_at = Column(TIMESTAMP, default=datetime.datetime.utcnow)
