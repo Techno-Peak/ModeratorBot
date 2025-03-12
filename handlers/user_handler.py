@@ -1,14 +1,13 @@
 from aiogram import Router
 from aiogram.types import Message
-from database.models import User
+from database.models import User, Group
 import re
 
 user_router = Router()
 
-
 @user_router.message()
 async def handle_message_user(message: Message):
-    if message.chat.type in ['group', 'supergroup']:
+    if message.chat.type in ['group', 'supergroup'] and await Group._is_activate(message.chat.id):
         tg_user = message.from_user
 
         if tg_user.first_name == 'Channel':
@@ -57,3 +56,5 @@ def has_link(text: str) -> bool:
         [^\s]*                                
     """
     return bool(re.search(link_pattern, text, re.VERBOSE | re.IGNORECASE))
+
+

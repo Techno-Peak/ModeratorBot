@@ -82,7 +82,9 @@ class Group(Base):
             stmt = select(cls).where(cls.chat_id == chat_id)
             result = await session.execute(stmt)
             _group = result.scalars().first()
-            return _group.is_activate
+            
+            if _group is not None:
+                return True
 
 
 class BlockedWord(Base):
