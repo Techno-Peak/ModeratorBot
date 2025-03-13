@@ -2,8 +2,10 @@ from aiogram import Router
 from aiogram.types import Message, ChatMemberUpdated, InlineKeyboardMarkup, InlineKeyboardButton, ChatMember
 from aiogram.enums import ChatMemberStatus
 from aiogram.filters import ChatMemberUpdatedFilter, IS_NOT_MEMBER, IS_MEMBER
-from database.models import User, Group
+from database.models import User, Group, BlockedWord
 from config import bot
+from typing import List
+import asyncio
 import re
 
 user_router = Router()
@@ -20,6 +22,12 @@ async def handle_message_user(message: Message):
         group = await Group.get_group(message.chat.id)
 
         if tg_user.id in admin_ids:
+            return
+        
+        asyncio.sleep(2)
+        if await is_blocked_message(message.text):
+            await message.reply("Bloklangan so'z bor")
+            await message.delete()
             return
         
 
@@ -148,3 +156,23 @@ async def is_user_subscribed(channel_id: int, user_id: int) -> bool:
     except Exception as e:
         print(f"Xatolik yuz berdi: {e}")
         return False
+
+
+async def contains_blocked_word(text: str, words_subset: list) -> bool:
+    words = text.lower().split()
+    return any(word in words_subset for word in words)
+
+async def is_blocked_message(text: str) -> bool:
+    blocked_words = await BlockedWord.get_blocked_words()
+    if not blocked_words:
+        return False
+    
+    num_tasks = max(len(blocked_words) // 5, 1)
+    word_chunks = [
+        blocked_words[i:i + (len(blocked_words) // num_tasks)]
+        for i in range(0, len(blocked_words), len(blocked_words) // num_tasks)
+    ]
+
+    tasks = [contains_blocked_word(text.lower(), chunk) for chunk in word_chunks]
+    results = await asyncio.gather(*tasks)
+    return any(results)

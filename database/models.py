@@ -116,3 +116,11 @@ class BlockedWord(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     word = Column(String)
+
+
+    @classmethod
+    async def get_blocked_words(cls):
+        async with AsyncSessionLocal() as session:
+            result = await session.execute(select(cls.word))
+            words = result.scalars().all() 
+            return list(words)
