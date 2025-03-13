@@ -68,6 +68,16 @@ class Group(Base):
             session.add(new_group)
             await session.commit()
             return new_group
+        
+    @classmethod
+    async def get_group(cls, chat_id: int):
+         async with AsyncSessionLocal() as session:
+            stmt = select(cls).where(cls.chat_id == chat_id)
+            result = await session.execute(stmt)
+            existing_user = result.scalars().first()
+
+            if existing_user:
+                return existing_user
 
     @classmethod
     async def _is_activate(cls, chat_id):
