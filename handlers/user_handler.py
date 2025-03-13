@@ -1,12 +1,13 @@
+import asyncio
+import re
 from aiogram import Router
-from aiogram.types import Message, ChatMemberUpdated, InlineKeyboardMarkup, InlineKeyboardButton, ChatMember
+from aiogram.types import Message, ChatMemberUpdated, InlineKeyboardMarkup, InlineKeyboardButton, ChatMember, ContentType
 from aiogram.enums import ChatMemberStatus
 from aiogram.filters import ChatMemberUpdatedFilter, IS_NOT_MEMBER, IS_MEMBER
 from database.models import User, Group, BlockedWord
 from config import bot
-from typing import List
-import asyncio
-import re
+from handlers.utils import delete_after_delay, AUTO_DELETE_TIME_INTERVAL
+
 
 user_router = Router()
 
@@ -15,7 +16,14 @@ user_router = Router()
 @user_router.message()
 async def handle_message_user(message: Message):
     if message.chat.type in ['group', 'supergroup'] and await Group._is_activate(message.chat.id):
+        if message.left_chat_member or message.new_chat_members:
+            await message.delete()
+            return
+
         tg_user = message.from_user
+
+        if message.left_chat_member or message.new_chat_members:
+            await message.delete()
 
         chat_admins = await message.bot.get_chat_administrators(message.chat.id)
         admin_ids = [admin.user.id for admin in chat_admins]
@@ -24,17 +32,9 @@ async def handle_message_user(message: Message):
         if tg_user.id in admin_ids:
             return
         
-        asyncio.sleep(2)
-        if await is_blocked_message(message.text):
-            await message.reply("Bloklangan so'z bor")
-            await message.delete()
-            return
-        
-
         if group and group.required_channel and await is_user_subscribed(group.required_channel, tg_user.id):
             if tg_user.first_name == 'Channel':
                 try:
-                    await message.reply(f"Bu guruhda kanal nomidan yozish taqiqlanadi!!")
                     await message.delete()
                 except Exception as e:
                     print(f"Kanal xabarini o‘chirishda xatolik: {e}")
@@ -50,7 +50,6 @@ async def handle_message_user(message: Message):
             if user:
                 if message.forward_date:
                     try:
-                        await message.reply(f"{user.first_name}, forward qilish mumkin emas.")
                         await message.delete()
                         print(f"Forward qilingan linkli xabar o‘chirildi:")
                     except Exception as e:
@@ -58,7 +57,6 @@ async def handle_message_user(message: Message):
 
                 elif message.text and has_link(message.text):
                     try:
-                        await message.reply(f"{user.first_name}, bu guruhda link yuborish mumkin emas!!")
                         await message.delete()
                         print(f"Link yoki username o‘chirildi.")
                     except Exception as e:
@@ -80,13 +78,18 @@ async def handle_message_user(message: Message):
                     ]
                 )
 
-                await message.reply(
+                sm = await message.reply(
                     f"📢 Guruhdan foydalanish uchun avval quyidagi kanalga a'zo bo‘lishingiz kerak:",
                     parse_mode="HTML",
                     disable_web_page_preview=True,
                     reply_markup=keyboard
                 )
                 await message.delete()
+                asyncio.create_task(delete_after_delay(sm.chat.id, sm.message_id, AUTO_DELETE_TIME_INTERVAL))
+
+        if await is_blocked_message(message.text):
+            await message.delete()
+            return
         
         
 # Linklarni tekshirish
@@ -109,10 +112,8 @@ def has_link(text: str) -> bool:
 async def on_user_join(event: ChatMemberUpdated):
     if await Group._is_activate(event.chat.id):
         group = await Group.get_or_create(event.chat.id, event.chat.title)
-        
         user = event.from_user
         required_channel = group.required_channel
-        print(await is_user_subscribed(required_channel, user.id))
 
         if required_channel and not await is_user_subscribed(required_channel, user.id):
             try:
@@ -131,7 +132,7 @@ async def on_user_join(event: ChatMemberUpdated):
                     ]
                 )
 
-                await event.answer(
+                sm = await event.answer(
                     f"Assalomu alaykum, <a href=\"tg://user?id={user.id}\">{user.full_name}</a>! {event.chat.title} guruhiga xush kelibsiz.\n\n"
                     f"📢 Guruhdan foydalanish uchun avval quyidagi kanalga a'zo bo‘lishingiz kerak:",
                     parse_mode="HTML",
@@ -139,14 +140,16 @@ async def on_user_join(event: ChatMemberUpdated):
                     reply_markup=keyboard
                 )
             else:
-                await event.answer(
+               sm = await event.answer(
                     "⚠️ Kechirasiz, kanalga obuna bo‘lish havolasini olish imkonsiz. Iltimos, admin bilan bog‘laning!"
                 )
         else:
-            await event.answer(
+            sm = await event.answer(
                 f"Assalomu alaykum! Siz {event.chat.title} guruhiga qo‘shildingiz."
             )
 
+        if sm:
+            asyncio.create_task(delete_after_delay(sm.chat.id, sm.message_id, AUTO_DELETE_TIME_INTERVAL))
 
 # Bot kanaliga azoligini tekshirish
 async def is_user_subscribed(channel_id: int, user_id: int) -> bool:
