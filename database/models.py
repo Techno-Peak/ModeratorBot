@@ -69,6 +69,16 @@ class Group(Base):
             await session.commit()
             return new_group
 
+    @classmethod
+    async def _is_activate(cls, chat_id):
+        async with AsyncSessionLocal() as session:
+            stmt = select(cls).where(cls.chat_id == chat_id)
+            result = await session.execute(stmt)
+            _group = result.scalars().first()
+
+            if _group is not None:
+                return True
+
     async def activate(self):
         async with AsyncSessionLocal() as session:
             self.is_activate = False if self.is_activate else True
@@ -76,15 +86,19 @@ class Group(Base):
             await session.commit()
             return self
 
-    @classmethod
-    async def _is_activate(cls, chat_id):
+    async def add_channel(self, channel_id):
         async with AsyncSessionLocal() as session:
-            stmt = select(cls).where(cls.chat_id == chat_id)
-            result = await session.execute(stmt)
-            _group = result.scalars().first()
-            
-            if _group is not None:
-                return True
+            self.required_channel = channel_id
+            session.add(self)
+            await session.commit()
+            return self
+
+    async def remove_channel(self, channel_id):
+        async with AsyncSessionLocal() as session:
+            self.required_channel = None
+            session.add(self)
+            await session.commit()
+            return self
 
 
 class BlockedWord(Base):
