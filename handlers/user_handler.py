@@ -10,6 +10,12 @@ async def handle_message_user(message: Message):
     if message.chat.type in ['group', 'supergroup'] and await Group._is_activate(message.chat.id):
         tg_user = message.from_user
 
+        chat_admins = await message.bot.get_chat_administrators(message.chat.id)
+        admin_ids = [admin.user.id for admin in chat_admins]
+
+        if tg_user.id in admin_ids:
+            return
+
         if tg_user.first_name == 'Channel':
             try:
                 await message.reply(f"Bu guruhda kanal nomidan yozish taqiqlanadi!!")
