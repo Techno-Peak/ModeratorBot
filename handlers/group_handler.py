@@ -1,10 +1,12 @@
+import asyncio
+
 from aiogram import Router, types
 from aiogram.enums import ChatMemberStatus
 from aiogram.filters import Command
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 from database.models import Group
-from config import BOT_USERNAME
+from config import BOT_USERNAME, bot
 
 group_router = Router()
 
@@ -12,6 +14,13 @@ NOT_ADMIN_TEXT = "🚫 Sizda ushbu buyruqni ishlatish uchun yetarli huquq yo‘q
                 "Bu buyruq faqat guruh administratorlari tomonidan bajarilishi mumkin."
 
 
+# Xabarni kechikish bilan o‘chirish
+async def delete_after_delay(chat_id, message_id, delay):
+    await asyncio.sleep(delay)
+    await bot.delete_message(chat_id, message_id)
+
+
+# Lichkadan yoki guruhdan /start bosilganda salomlashuv xabarini yuboradi
 @group_router.message(Command("start"))
 async def start_command(message: types.Message):
     text = (
@@ -34,9 +43,16 @@ async def start_command(message: types.Message):
     )
     keyboard = InlineKeyboardMarkup(inline_keyboard=[[start_button]])
 
-    await message.reply(text, parse_mode="Markdown", reply_markup=keyboard)
+    sent_message = await message.reply(
+        text=text,
+        parse_mode="Markdown",
+        reply_markup=keyboard
+    )
+
+    asyncio.create_task(delete_after_delay(message.chat.id, sent_message.message_id, 60))
 
 
+# Guruhni faollashtirish
 @group_router.message(Command("activate"))
 async def activate_group(message: types.Message):
     if message.chat.type in ['group', 'supergroup']:
@@ -89,6 +105,7 @@ async def activate_group(message: types.Message):
         )
 
 
+# Guruhni deaktivatsiyalash (Botdan ajratish)
 @group_router.message(Command("deactivate"))
 async def deactivate_group(message: types.Message):
     if message.chat.type in ['group', 'supergroup']:
@@ -143,6 +160,7 @@ async def deactivate_group(message: types.Message):
         )
 
 
+# Guruhga kanalni bog'lash
 @group_router.message(Command("add"))
 async def add_channel(message: types.Message):
     if message.chat.type in ['group', 'supergroup']:
@@ -232,6 +250,7 @@ async def add_channel(message: types.Message):
             )
 
 
+# Guruhni kanaldan ajratish
 @group_router.message(Command("removeChannel"))
 async def remove_channel(message: types.Message):
     if message.chat.type in ['group', 'supergroup']:
