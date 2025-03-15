@@ -6,7 +6,7 @@ from aiogram.enums import ChatMemberStatus
 from aiogram.filters import ChatMemberUpdatedFilter, IS_NOT_MEMBER, IS_MEMBER
 from database.models import User, Group, BlockedWord, Invite
 from config import bot
-from handlers.utils import delete_after_delay, AUTO_DELETE_TIME_INTERVAL
+from handlers.utils import delete_after_delay, AUTO_DELETE_TIME_INTERVAL, delete_message
 
 
 user_router = Router()
@@ -16,12 +16,12 @@ user_router = Router()
 @user_router.message()
 async def handle_message_user(message: Message):
     if message.chat.type in ['group', 'supergroup']:
-        _group = await Group.get_group(message.chat.id)
+        _group = await Group.get_or_create(message.chat.id, message.chat.title)
         if not _group.is_activate:
             return
 
         if message.left_chat_member:
-            await message.delete()
+            await delete_message(message)
             return
 
         if message.new_chat_members:
@@ -31,13 +31,13 @@ async def handle_message_user(message: Message):
             )
             for new_member in message.new_chat_members:
                 invite = await invite.add_invite(invited_chat_id=new_member.id)
-            await message.delete()
+            await delete_message(message)
             return
 
         tg_user = message.from_user
 
         if message.left_chat_member or message.new_chat_members:
-            await message.delete()
+            await delete_message(message)
 
         chat_admins = await message.bot.get_chat_administrators(message.chat.id)
         admin_ids = [admin.user.id for admin in chat_admins]
@@ -47,13 +47,13 @@ async def handle_message_user(message: Message):
             return
 
         if message.story:
-            await message.delete()
+            await delete_message(message)
             return
         
         if _group and _group.required_channel and await is_user_subscribed(_group.required_channel, tg_user.id):
             if tg_user.first_name == 'Channel':
                 try:
-                    await message.delete()
+                    await delete_message(message)
                 except Exception as e:
                     print(f"Kanal xabarini o‘chirishda xatolik: {e}")
                 return
@@ -68,14 +68,14 @@ async def handle_message_user(message: Message):
             if user:
                 if message.forward_date:
                     try:
-                        await message.delete()
+                        await delete_message(message)
                         print(f"Forward qilingan linkli xabar o‘chirildi:")
                     except Exception as e:
                         print(f"Forward xabarni o‘chirishda xatolik: {e}")
 
                 elif message.text and has_link(message.text):
                     try:
-                        await message.delete()
+                        await delete_message(message)
                         print(f"Link yoki username o‘chirildi.")
                     except Exception as e:
                         print(f"Xabarni o‘chirishda xatolik: {e}")
@@ -107,7 +107,7 @@ async def handle_message_user(message: Message):
                     reply_markup=keyboard
                 )
 
-                await message.delete()
+                await delete_message(message)
                 asyncio.create_task(delete_after_delay(sm.chat.id, sm.message_id, AUTO_DELETE_TIME_INTERVAL))
 
         invite = await Invite.get_invite(
@@ -116,7 +116,7 @@ async def handle_message_user(message: Message):
         )
 
         if invite and invite.count < _group.required_members:
-            if _user.is_admin:
+            if _user and _user.is_admin:
                 return
 
             remaining = _group.required_members - invite.count
@@ -129,12 +129,12 @@ async def handle_message_user(message: Message):
                 f"/my_count - Men qo'shgan odamlar soni!",
                 parse_mode="HTML"
             )
-            await message.delete()
+            await delete_message(message)
             asyncio.create_task(delete_after_delay(sm.chat.id, sm.message_id, AUTO_DELETE_TIME_INTERVAL))
             return
 
         if await is_blocked_message(message.text):
-            await message.delete()
+            await delete_message(message)
             return
         
         
