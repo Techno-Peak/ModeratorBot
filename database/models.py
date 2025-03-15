@@ -14,11 +14,13 @@ class User(Base):
     last_name = Column(String, nullable=True)
     is_admin = Column(Boolean, default=False)
     is_permission = Column(Boolean, default=False)
+    is_private = Column(Boolean, default=False, nullable=True)
     count = Column(Integer, default=0)
 
     @classmethod
     async def get_or_create(cls, chat_id: int, username: str = None, first_name: str = None, 
-                            last_name: str = None, is_admin: bool = False, is_permission: bool = False):
+                            last_name: str = None, is_admin: bool = False, is_permission: bool = False,
+                            is_private: bool = False):
         async with AsyncSessionLocal() as session:
             stmt = select(cls).where(cls.chat_id == chat_id)
             result = await session.execute(stmt)
@@ -38,6 +40,13 @@ class User(Base):
             session.add(new_user)
             await session.commit()
             return new_user
+
+    async def update_is_private(self, is_private: bool = False):
+        async with AsyncSessionLocal() as session:
+            self.is_private = is_private
+            session.add(self)
+            await session.commit()
+            return self
 
 
 class Group(Base):
