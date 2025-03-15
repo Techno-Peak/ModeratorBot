@@ -31,6 +31,10 @@ async def handle_message_user(message: Message):
 
         if tg_user.id in admin_ids:
             return
+
+        if message.story:
+            await message.delete()
+            return
         
         if group and group.required_channel and await is_user_subscribed(group.required_channel, tg_user.id):
             if tg_user.first_name == 'Channel':
@@ -78,12 +82,17 @@ async def handle_message_user(message: Message):
                     ]
                 )
 
-                sm = await message.reply(
-                    f"📢 Guruhdan foydalanish uchun avval quyidagi kanalga a'zo bo‘lishingiz kerak:",
+                sm = await message.bot.send_message(
+                    chat_id=message.chat.id,
+                    text=(
+                        f"📢 <b>Diqqat, <a href=\"tg://user?id={message.from_user.id}\">{message.from_user.full_name}</a>!</b>\n\n"
+                        "Guruhdan to‘liq foydalanish uchun avval quyidagi kanalga a'zo bo‘lishingiz kerak.👇"
+                    ),
                     parse_mode="HTML",
                     disable_web_page_preview=True,
                     reply_markup=keyboard
                 )
+
                 await message.delete()
                 asyncio.create_task(delete_after_delay(sm.chat.id, sm.message_id, AUTO_DELETE_TIME_INTERVAL))
 
@@ -132,22 +141,41 @@ async def on_user_join(event: ChatMemberUpdated):
                     ]
                 )
 
-                sm = await event.answer(
-                    f"Assalomu alaykum, <a href=\"tg://user?id={user.id}\">{user.full_name}</a>! {event.chat.title} guruhiga xush kelibsiz.\n\n"
-                    f"📢 Guruhdan foydalanish uchun avval quyidagi kanalga a'zo bo‘lishingiz kerak:",
+                sm = await event.bot.send_message(
+                    chat_id=event.chat.id,
+                    text=(
+                        f"👋 <b>Assalomu alaykum</b>, <a href=\"tg://user?id={user.id}\">{user.full_name}</a>!\n\n"
+                        f"🎉 <b>{event.chat.title}</b> guruhiga xush kelibsiz!\n\n"
+                        "📢 Guruhdan to‘liq foydalanish uchun avval quyidagi kanalga a'zo bo‘lishingiz kerak:👇"
+                    ),
                     parse_mode="HTML",
                     disable_web_page_preview=True,
                     reply_markup=keyboard
                 )
-            else:
-               sm = await event.answer(
-                    "⚠️ Kechirasiz, kanalga obuna bo‘lish havolasini olish imkonsiz. Iltimos, admin bilan bog‘laning!"
-                )
-        else:
-            sm = await event.answer(
-                f"Assalomu alaykum! Siz {event.chat.title} guruhiga qo‘shildingiz."
-            )
 
+            else:
+                sm = await event.bot.send_message(
+                    chat_id=event.chat.id,
+                    text=(
+                        f"❌ <b>Kechirasiz</b>, <a href=\"tg://user?id={user.id}\">{user.full_name}</a>!\n\n"
+                        "⚠️ Kanalga obuna bo‘lish havolasini olish imkonsiz.\n"
+                        "📩 Iltimos, muammo yuzasidan <b>admin</b> bilan bog‘laning!"
+                    ),
+                    parse_mode="HTML"
+                )
+
+        else:
+            sm = await event.bot.send_message(
+                chat_id=event.chat.id,
+                text=(
+                    f"🌟 <b>Assalomu alaykum</b>, <a href=\"tg://user?id={user.id}\">{user.full_name}</a>!\n\n"
+                    f"😊 Siz <b>{event.chat.title}</b> guruhiga muvaffaqiyatli qo‘shildingiz!\n"
+                    f"📌 Guruh qoidalarini hurmat qiling va faol bo‘ling.\n\n"
+                    f"✅ Savollaringiz bo‘lsa, adminlarga murojaat qilishingiz mumkin.\n"
+                    f"🎉 Sizga mazmunli muloqot va yoqimli suhbatlar tilaymiz!"
+                ),
+                parse_mode="HTML"
+            )
         if sm:
             asyncio.create_task(delete_after_delay(sm.chat.id, sm.message_id, AUTO_DELETE_TIME_INTERVAL))
 

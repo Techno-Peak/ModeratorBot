@@ -4,9 +4,8 @@ from aiogram.types import Message
 
 admin_router = Router()
 
-@admin_router.message(Command('link'))
+@admin_router.message(Command('admin'))
 async def remove_join_leave_messages(message: Message):
     await message.answer(
-        "Joined message word"
+        "Admin panel ustida ish olib borilmoqda"
     )
-
