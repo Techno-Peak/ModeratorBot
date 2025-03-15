@@ -33,13 +33,14 @@ async def start_command(message: types.Message):
     text = (
         "👋 Assalomu alaykum!\n\n"
         "Men guruhingizni tartibga solishda yordam beruvchi botman.\n\n"
+        "Guruhingizda admin qiling va /activate buyrug'ini yuboring, yordam kerak bo'lsa /help dan foydalaning\n\n"
         "*Mening imkoniyatlarim:*\n"
-        "📌 *KANALGA OBUNA SHART* - Foydalanuvchilar kanalga a’zo bo‘lmaguncha yozish huquqiga ega bo‘lmaydi.\n\n"
-        "👥 *GURUHGA ODAM TAKLIF QILISH* - Foydalanuvchilar ma’lum miqdordagi odamni guruhga taklif qilmaguncha yozishlari cheklanadi.\n\n"
-        "🗑 *KIRDI-CHIQTI XABARLARINI O‘CHIRISH* - Guruhga kim qo‘shilgani yoki chiqib ketgani haqidagi xabarlarni avtomatik o‘chirib boraman.\n\n"
-        "⛔️ *REKLAMA VA SPAMGA QARSHI HIMOYA* - Guruhingizni nomaqbul reklama va spamdan himoya qilaman.\n\n"
-        "🔞 *SO‘KINISH VA HAQORATLARNI O‘CHIRISH* - Axloqsiz va haqoratli so‘zlarni aniqlab, ularni avtomatik o‘chiraman.\n\n"
-        "🚫 *KANAL NOMIDAN YOZISHNI TAQIQLASH* - Foydalanuvchilarning kanal nomidan yozishiga ruxsat bermayman.\n\n"
+        "📌 *KANALGA OBUNA SHART* - Foydalanuvchilar kanalga a’zo bo‘lmaguncha yozish huquqiga ega bo‘lmaydi.\n"
+        "👥 *GURUHGA ODAM TAKLIF QILISH* - Foydalanuvchilar ma’lum miqdordagi odamni guruhga taklif qilmaguncha yozishlari cheklanadi.\n"
+        "🗑 *KIRDI-CHIQTI XABARLARINI O‘CHIRISH* - Guruhga kim qo‘shilgani yoki chiqib ketgani haqidagi xabarlarni avtomatik o‘chirib boraman.\n"
+        "⛔️ *REKLAMA VA SPAMGA QARSHI HIMOYA* - Guruhingizni nomaqbul reklama va spamdan himoya qilaman.\n"
+        "🔞 *SO‘KINISH VA HAQORATLARNI O‘CHIRISH* - Axloqsiz va haqoratli so‘zlarni aniqlab, ularni avtomatik o‘chiraman.\n"
+        "🚫 *KANAL NOMIDAN YOZISHNI TAQIQLASH* - Foydalanuvchilarning kanal nomidan yozishiga ruxsat bermayman.\n"
         "🔹 Botni guruhingizga qo‘shib, tartibni ta’minlang!"
     )
 
@@ -137,6 +138,7 @@ async def activate_group(message: types.Message):
     if sm:
         asyncio.create_task(delete_after_delay(sm.chat.id, sm.message_id, AUTO_DELETE_TIME_INTERVAL))
 
+
 # Guruhni deaktivatsiyalash (Botdan ajratish)
 @group_router.message(Command("deactivate"))
 async def deactivate_group(message: types.Message):
@@ -186,7 +188,7 @@ async def deactivate_group(message: types.Message):
                 parse_mode="HTML"
             )
 
-            await message.delete()  
+            await delete_message(message)  
 
             asyncio.create_task(delete_after_delay(sm.chat.id, sm.message_id, AUTO_DELETE_TIME_INTERVAL))
             return
@@ -199,14 +201,14 @@ async def deactivate_group(message: types.Message):
             parse_mode="HTML"
         )
 
-        await message.delete()
+        await delete_message(message)
     else:
         sm = await message.bot.send_message(
             chat_id=message.chat.id,
             text="⚠️ /deactivate buyrug‘idan faqat guruhlarda foydalanish mumkin!"
         )
 
-        await message.delete()  
+        await delete_message(message)  
 
     if sm:
         asyncio.create_task(delete_after_delay(sm.chat.id, sm.message_id, AUTO_DELETE_TIME_INTERVAL))
@@ -229,7 +231,7 @@ async def add_channel(message: types.Message):
                 parse_mode="Markdown"
             )
 
-            await message.delete()  
+            await delete_message(message)  
             asyncio.create_task(delete_after_delay(sm.chat.id, sm.message_id, AUTO_DELETE_TIME_INTERVAL))
             return
 
@@ -250,7 +252,7 @@ async def add_channel(message: types.Message):
                 parse_mode="Markdown"
             )
 
-            await message.delete()  
+            await delete_message(message)  
 
             asyncio.create_task(delete_after_delay(sm.chat.id, sm.message_id, AUTO_DELETE_TIME_INTERVAL))
             return
@@ -262,7 +264,7 @@ async def add_channel(message: types.Message):
                      NOT_ADMIN_TEXT,
                 parse_mode="HTML"
             )
-            await message.delete()
+            await delete_message(message)
             asyncio.create_task(delete_after_delay(sm.chat.id, sm.message_id, AUTO_DELETE_TIME_INTERVAL))
             return
 
@@ -274,7 +276,7 @@ async def add_channel(message: types.Message):
                 "📌 Misol: `/add @channel_username`",
                 parse_mode="Markdown"
             )
-            await message.delete()
+            await delete_message(message)
             asyncio.create_task(delete_after_delay(sm.chat.id, sm.message_id, AUTO_DELETE_TIME_INTERVAL))
             return
 
@@ -290,7 +292,7 @@ async def add_channel(message: types.Message):
                 parse_mode="HTML"
             )
 
-            await message.delete()
+            await delete_message(message)
             asyncio.create_task(delete_after_delay(sm.chat.id, sm.message_id, AUTO_DELETE_TIME_INTERVAL))
             return
 
@@ -308,7 +310,7 @@ async def add_channel(message: types.Message):
                     text=f"✅ [ {channel.title} ](https://t.me/{channel_username.lstrip('@')}) kanali guruhga muvaffaqiyatli qo‘shildi!",
                     parse_mode="Markdown"
                 )
-                await message.delete()
+                await delete_message(message)
                 asyncio.create_task(delete_after_delay(sm.chat.id, sm.message_id, AUTO_DELETE_TIME_INTERVAL))
                 return
 
@@ -323,7 +325,7 @@ async def add_channel(message: types.Message):
                     "So‘ng, qaytadan `/add @channel_username` buyrug'ini yuboring!",
                     parse_mode="Markdown"
                 )
-                await message.delete()
+                await delete_message(message)
                 asyncio.create_task(delete_after_delay(sm.chat.id, sm.message_id, AUTO_DELETE_TIME_INTERVAL))
                 return
 
@@ -334,9 +336,20 @@ async def add_channel(message: types.Message):
                 "ℹ️ Iltimos, botni kanalingizga *admin* sifatida qo‘shing va qaytadan urinib ko‘ring!",
                 parse_mode="Markdown"
             )
-            await message.delete()
+            await delete_message(message)
             asyncio.create_task(delete_after_delay(sm.chat.id, sm.message_id, AUTO_DELETE_TIME_INTERVAL))
             return
+    else:
+        sm = await message.bot.send_message(
+            chat_id=message.chat.id,
+            text="❌ Bu buyruq faqat guruhlarda ishlaydi!\n\n"
+                 "ℹ️ Guruhga kanalni bog'lash uchun guruh ichida /add buyrug'ini yuboring."
+        )
+
+        await delete_message(message)
+
+    if sm:
+        asyncio.create_task(delete_after_delay(sm.chat.id, sm.message_id, AUTO_DELETE_TIME_INTERVAL))
 
 
 # Guruhni kanaldan ajratish
@@ -353,7 +366,7 @@ async def remove_channel(message: types.Message):
                 text="❌ Bot hali guruhga ulanmagan.\n\n"
                 "🔹 Botni guruhga ulash uchun /activate buyrug‘idan foydalaning."
             )
-            await message.delete()
+            await delete_message(message)
             asyncio.create_task(delete_after_delay(sm.chat.id, sm.message_id, AUTO_DELETE_TIME_INTERVAL))
             return
 
@@ -372,7 +385,7 @@ async def remove_channel(message: types.Message):
                 "✅ Xabar yuborish va o‘zgartirish\n\n",
                 parse_mode="Markdown"
             )
-            await message.delete()
+            await delete_message(message)
             asyncio.create_task(delete_after_delay(sm.chat.id, sm.message_id, AUTO_DELETE_TIME_INTERVAL))
             return
 
@@ -383,7 +396,7 @@ async def remove_channel(message: types.Message):
                      NOT_ADMIN_TEXT,
                 parse_mode="HTML"
             )
-            await message.delete()
+            await delete_message(message)
             asyncio.create_task(delete_after_delay(sm.chat.id, sm.message_id, AUTO_DELETE_TIME_INTERVAL))
             return
 
@@ -396,7 +409,7 @@ async def remove_channel(message: types.Message):
                 f"➖ Yangi kanal qo‘shish uchun avval `/add @channel_username` buyrug‘ini yuborib yangi kanal qo'shishingiz mumkin",
                 parse_mode="Markdown"
             )
-            await message.delete()
+            await delete_message(message)
             asyncio.create_task(delete_after_delay(sm.chat.id, sm.message_id, AUTO_DELETE_TIME_INTERVAL))
             return
 
@@ -407,12 +420,32 @@ async def remove_channel(message: types.Message):
             "`/add @channel_username`",
             parse_mode="Markdown"
         )
-        await message.delete()
+        await delete_message(message)
         asyncio.create_task(delete_after_delay(sm.chat.id, sm.message_id, AUTO_DELETE_TIME_INTERVAL))
         return
+    else:
+        sm = await message.bot.send_message(
+            chat_id=message.chat.id,
+            text="❌ Bu buyruq faqat guruhlarda ishlaydi!\n\n"
+                 "ℹ️ Guruhdan kanalni ajratish uchun guruh ichida /remove_channel buyrug'ini yuboring."
+        )
+
+        await delete_message(message)
+
+    if sm:
+        asyncio.create_task(delete_after_delay(sm.chat.id, sm.message_id, AUTO_DELETE_TIME_INTERVAL))
+
 
 @group_router.message(Command("top10"))
 async def top10_invites(message: types.Message):
+    if message.chat.type == 'private':
+        await message.bot.send_message(
+            chat_id=message.chat.id,
+            text="❌ Bu buyruq faqat guruhlarda ishlaydi!\n\n"
+        )
+        await delete_message(message)
+        return
+
     top_users = await Invite.get_top_invites(10)
 
     if not top_users:
@@ -431,6 +464,14 @@ async def top10_invites(message: types.Message):
 
 @group_router.message(Command("my_count"))
 async def my_invite_count(message: types.Message):
+    if message.chat.type == 'private':
+        await message.bot.send_message(
+            chat_id=message.chat.id,
+            text="❌ Bu buyruq faqat guruhlarda ishlaydi!\n\n"
+        )
+        await delete_message(message)
+        return
+
     user_id = message.from_user.id
     invite_count = await Invite.get_user_invite_count(user_id)
     user_mention = f"<a href='tg://user?id={user_id}'>{message.from_user.full_name}</a>"
@@ -445,4 +486,38 @@ async def my_invite_count(message: types.Message):
     )
 
     asyncio.create_task(delete_after_delay(sm.chat.id, sm.message_id, AUTO_DELETE_TIME_INTERVAL))
-    await message.delete()
+    await delete_message(message)
+
+
+
+@group_router.message(Command("help"))
+async def help_bot(message: types.Message):
+    help_text = (
+        "🤖 <b>Botda mavjud buyruqlar:</b>\n\n"
+        "🛠 <b>Admin buyruqlari:</b>\n"
+        "  ➤ <code>/add_admin [ID]</code> – Foydalanuvchini admin qilish.\n"
+        "  ➤ <code>/remove_admin [ID]</code> – Foydalanuvchidan adminlik huquqini olib tashlash.\n"
+        "  ➤ <code>/add [kanal_id]</code> – Kanalni botga qo‘shish.\n"
+        "  ➤ <code>/remove_channel [kanal_id]</code> – Kanalni botdan olib tashlash.\n"
+        "  ➤ <code>/activate</code> – Botni guruhda faollashtirish.\n"
+        "  ➤ <code>/deactivate</code> – Botni guruhda faolsizlantirish.\n"
+        "  ➤ <code>/word [so‘z]</code> – Bloklangan so‘zlar ro‘yxatiga yangi so‘z qo‘shish.\n"
+        "  ➤ <code>/count [son]</code> – Guruhda yozish uchun minimal odam sonini belgilash.\n\n"
+        "📌 <b>Foydalanuvchilar uchun buyruqlar:</b>\n"
+        "  ➤ <code>/start</code> – Botni ishga tushirish.\n"
+        "  ➤ <code>/help</code> – Botdagi mavjud buyruqlarni ko‘rish.\n"
+        "  ➤ <code>/my_count</code> – Men taklif qilgan odamlar sonini ko‘rish.\n"
+        "  ➤ <code>/top10</code> – Eng ko‘p odam qo‘shgan 10 ta foydalanuvchini ko‘rish.\n\n"
+        "❓ <b>Agar biror savolingiz bo‘lsa, administratorlarga murojaat qiling!</b>"
+    )
+
+    sm = await message.bot.send_message(
+        chat_id=message.chat.id,
+        text=help_text,
+        parse_mode="HTML"
+    )
+
+
+    if message.chat.type in ['group', 'supergroup']:
+        asyncio.create_task(delete_after_delay(sm.chat.id, sm.message_id, AUTO_DELETE_TIME_INTERVAL))
+        await delete_message(message)

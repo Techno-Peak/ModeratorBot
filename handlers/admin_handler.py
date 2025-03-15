@@ -57,7 +57,7 @@ async def add_blocked_word(message: Message):
             parse_mode="HTML"
         )
         asyncio.create_task(delete_after_delay(sm.chat.id, sm.message_id, AUTO_DELETE_TIME_INTERVAL))
-        await message.delete()
+        await delete_message(message)
 
 
 @admin_router.message(Command('count'))
@@ -74,7 +74,7 @@ async def required_members(message: Message):
                      "<code>/activate</code>",
                 parse_mode="HTML"
             )
-            await message.delete()
+            await delete_message(message)
             asyncio.create_task(delete_after_delay(sm.chat.id, sm.message_id, AUTO_DELETE_TIME_INTERVAL))
             return
 
@@ -137,7 +137,7 @@ async def required_members(message: Message):
                 parse_mode="HTML"
             )
         asyncio.create_task(delete_after_delay(sm.chat.id, sm.message_id, AUTO_DELETE_TIME_INTERVAL))
-        await message.delete()
+        await delete_message(message)
 
     else:
         sm = await message.bot.send_message(
@@ -147,7 +147,7 @@ async def required_members(message: Message):
             parse_mode="HTML"
         )
         asyncio.create_task(delete_after_delay(sm.chat.id, sm.message_id, AUTO_DELETE_TIME_INTERVAL))
-        await message.delete()
+        await delete_message(message)
 
 @admin_router.message(Command('add_admin'))
 async def add_admin(message: Message):
@@ -216,7 +216,7 @@ async def add_admin(message: Message):
             parse_mode="HTML"
         )
         asyncio.create_task(delete_after_delay(sm.chat.id, sm.message_id, AUTO_DELETE_TIME_INTERVAL))
-        await message.delete()
+        await delete_message(message)
 
 
 @admin_router.message(Command('remove_admin'))
@@ -287,4 +287,4 @@ async def remove_admin(message: Message):
             parse_mode="HTML"
         )
         asyncio.create_task(delete_after_delay(sm.chat.id, sm.message_id, AUTO_DELETE_TIME_INTERVAL))
-        await message.delete()
+        await delete_message(message)
