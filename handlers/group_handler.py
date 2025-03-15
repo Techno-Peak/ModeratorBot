@@ -5,7 +5,7 @@ from aiogram.enums import ChatMemberStatus
 from aiogram.filters import Command
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
-from database.models import Group, User
+from database.models import Group, User, Invite
 from config import BOT_USERNAME
 from handlers.utils import delete_after_delay, AUTO_DELETE_TIME_INTERVAL, delete_message
 
@@ -410,3 +410,39 @@ async def remove_channel(message: types.Message):
         await message.delete()
         asyncio.create_task(delete_after_delay(sm.chat.id, sm.message_id, AUTO_DELETE_TIME_INTERVAL))
         return
+
+@group_router.message(Command("top10"))
+async def top10_invites(message: types.Message):
+    top_users = await Invite.get_top_invites(10)
+
+    if not top_users:
+        await message.reply("📊 Hali hech kim taklif qilmagan.")
+        return
+
+    text = "🏆 Eng ko‘p odam qo‘shganlar:\n\n"
+    for index, (user_id, count) in enumerate(top_users, start=1):
+        user = await message.bot.get_chat(user_id)
+        text += f"{index}. <a href='tg://user?id={user_id}'>{user.full_name}</a> - {count} ta odam\n"
+
+    sm = await message.reply(text, parse_mode="HTML")
+    asyncio.create_task(delete_after_delay(sm.chat.id, sm.message_id, AUTO_DELETE_TIME_INTERVAL))
+    asyncio.create_task(delete_after_delay(message.chat.id, message.message_id, AUTO_DELETE_TIME_INTERVAL))
+
+
+@group_router.message(Command("my_count"))
+async def my_invite_count(message: types.Message):
+    user_id = message.from_user.id
+    invite_count = await Invite.get_user_invite_count(user_id)
+    user_mention = f"<a href='tg://user?id={user_id}'>{message.from_user.full_name}</a>"
+
+    sm = await message.bot.send_message(
+        chat_id=message.chat.id,
+        text=(
+            f"📊 Hurmatli {user_mention}, sizning takliflaringiz statistikasi:\n\n"
+            f"👥 Siz hozirgacha <b>{invite_count}</b> ta odamni guruhga qo‘shgansiz.\n"
+        ),
+        parse_mode="HTML"
+    )
+
+    asyncio.create_task(delete_after_delay(sm.chat.id, sm.message_id, AUTO_DELETE_TIME_INTERVAL))
+    await message.delete()
