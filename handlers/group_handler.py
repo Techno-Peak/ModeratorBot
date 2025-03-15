@@ -282,10 +282,14 @@ async def add_channel(message: types.Message):
             channel = await message.bot.get_chat(_group.required_channel)
             sm = await message.bot.send_message(
                 chat_id=message.chat.id,
-                text=f"📢 Guruh allaqachon [ {channel.title} ](https://t.me/{channel.username.lstrip('@')}) kanaliga ulangan.\n\n"
-                "➖ Yangi kanal qo‘shish uchun avval /remove_channel buyrug‘ini yuborib, avvalgi kanalni ajrating.",
-                parse_mode="Markdown"
+                text=(
+                    f"📢 Guruh allaqachon <a href='https://t.me/{channel.username.lstrip('@')}'>{channel.title}</a> "
+                    "kanaliga ulangan.\n\n"
+                    "➖ Yangi kanal qo‘shish uchun avval <b>/remove_channel</b> buyrug‘ini yuborib, avvalgi kanalni ajrating."
+                ),
+                parse_mode="HTML"
             )
+
             await message.delete()
             asyncio.create_task(delete_after_delay(sm.chat.id, sm.message_id, AUTO_DELETE_TIME_INTERVAL))
             return
