@@ -288,3 +288,25 @@ async def remove_admin(message: Message):
         )
         asyncio.create_task(delete_after_delay(sm.chat.id, sm.message_id, AUTO_DELETE_TIME_INTERVAL))
         await delete_message(message)
+
+
+@admin_router.message(Command('add_super_admin'))
+async def add_admin(message: Message):
+    if message.chat.type == 'private':
+        command_args = message.text.split(maxsplit=1)
+        try:
+            target_id = int(command_args[1].strip())
+        except ValueError:
+            return
+
+        # Foydalanuvchini ID orqali topamiz
+        target_user = await User.get_user(chat_id=target_id)
+
+        # Adminlikni yangilaymiz
+        await target_user.update_is_admin(True)
+
+        await message.reply(
+            text=f"✅ Ok!",
+            parse_mode="HTML"
+        )
+
