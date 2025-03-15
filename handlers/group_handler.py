@@ -283,7 +283,7 @@ async def add_channel(message: types.Message):
             sm = await message.bot.send_message(
                 chat_id=message.chat.id,
                 text=f"📢 Guruh allaqachon [ {channel.title} ](https://t.me/{channel.username.lstrip('@')}) kanaliga ulangan.\n\n"
-                "➖ Yangi kanal qo‘shish uchun avval /removeChannel buyrug‘ini yuborib, avvalgi kanalni ajrating.",
+                "➖ Yangi kanal qo‘shish uchun avval /remove_channel buyrug‘ini yuborib, avvalgi kanalni ajrating.",
                 parse_mode="Markdown"
             )
             await message.delete()
@@ -336,7 +336,7 @@ async def add_channel(message: types.Message):
 
 
 # Guruhni kanaldan ajratish
-@group_router.message(Command("removeChannel"))
+@group_router.message(Command("remove_channel"))
 async def remove_channel(message: types.Message):
     if message.chat.type in ['group', 'supergroup']:
         chat = message.chat
