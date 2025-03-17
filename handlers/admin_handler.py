@@ -60,7 +60,7 @@ async def add_blocked_word(message: Message):
         await delete_message(message)
 
 
-@admin_router.message(Command('count'))
+@admin_router.message(Command('guruh'))
 async def required_members(message: Message):
     if message.chat.type in ['group', 'supergroup']:
         user = message.from_user
@@ -85,7 +85,7 @@ async def required_members(message: Message):
             sm = await message.bot.send_message(
                 chat_id=message.chat.id,
                 text=f"⚠️ Hurmatli <a href=\"tg://user?id={user.id}\">{user.full_name}</a>, siz ushbu buyruqdan foydalanish huquqiga ega emassiz!\n\n"
-                     "📌 Faqat guruh administratorlari <b>/count</b> buyrug‘idan foydalanishi mumkin.",
+                     "📌 Faqat guruh administratorlari <b>/guruh</b> buyrug‘idan foydalanishi mumkin.",
                 parse_mode="HTML"
             )
             asyncio.create_task(delete_after_delay(sm.chat.id, sm.message_id, AUTO_DELETE_TIME_INTERVAL))
@@ -97,7 +97,7 @@ async def required_members(message: Message):
             sm = await message.bot.send_message(
                 chat_id=message.chat.id,
                 text="ℹ️ Iltimos, buyruq bilan birga majburiy qo'shilishi kerak bo'lgan odamlar sonini ham yuboring.\n\n"
-                     "📌 Misol: <code>/count 5</code>",
+                     "📌 Misol: <code>/guruh 5</code>",
                 parse_mode="HTML"
             )
             asyncio.create_task(delete_after_delay(sm.chat.id, sm.message_id, AUTO_DELETE_TIME_INTERVAL))
@@ -114,9 +114,9 @@ async def required_members(message: Message):
                     text=f"✅ Guruhga majburiy qo‘shilishi kerak bo‘lgan odamlar soni <b>{required_count}</b> ga o‘rnatildi.\n\n"
                          "📌 Endi guruhda yozish uchun foydalanuvchilar ushbu limitga javob berishi kerak.\n\n"
                          "✏️ Agar bu sonni o‘zgartirmoqchi bo‘lsangiz, quyidagi formatda yangi sonni kiriting:\n"
-                         "<code>/count [yangi son]</code>\n\n"
+                         "<code>/guruh [yangi son]</code>\n\n"
                          "❌ Agar bu talabni o‘chirmoqchi bo‘lsangiz, quyidagi buyruqni yuboring:\n"
-                         "<code>/count 0</code>",
+                         "<code>/guruh 0</code>",
                     parse_mode="HTML"
                 )
             else:
@@ -125,7 +125,7 @@ async def required_members(message: Message):
                     text="✅ Guruhga majburiy qo‘shilish talabi bekor qilindi.\n\n"
                          "📌 Endi foydalanuvchilar cheklovsiz yozishlari mumkin.\n\n"
                          "✏️ Agar bu talabni qayta yoqmoqchi bo‘lsangiz, yangi limitni quyidagi formatda kiriting:\n"
-                         "<code>/count [yangi son]</code>",
+                         "<code>/guruh [yangi son]</code>",
                     parse_mode="HTML"
                 )
         else:
@@ -133,7 +133,7 @@ async def required_members(message: Message):
                 chat_id=message.chat.id,
                 text="❌ Noto‘g‘ri format! Iltimos, faqat raqam kiriting.\n\n"
                      "✅ To‘g‘ri foydalanish namunasi:\n"
-                     "<code>/count 5</code>",
+                     "<code>/guruh 5</code>",
                 parse_mode="HTML"
             )
         asyncio.create_task(delete_after_delay(sm.chat.id, sm.message_id, AUTO_DELETE_TIME_INTERVAL))
@@ -142,7 +142,7 @@ async def required_members(message: Message):
     else:
         sm = await message.bot.send_message(
             chat_id=message.chat.id,
-            text="ℹ️ <b>/count</b> buyrug‘idan faqat guruhlarda foydalanish mumkin.\n\n"
+            text="ℹ️ <b>/guruh</b> buyrug‘idan faqat guruhlarda foydalanish mumkin.\n\n"
                  "Iltimos, botni guruhga qo‘shing va ushbu buyruqdan foydalaning.",
             parse_mode="HTML"
         )
