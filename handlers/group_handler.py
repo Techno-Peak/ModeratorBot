@@ -215,7 +215,7 @@ async def deactivate_group(message: types.Message):
     
 
 # Guruhga kanalni bog'lash
-@group_router.message(Command("add"))
+@group_router.message(Command("kanal"))
 async def add_channel(message: types.Message):
     if message.chat.type in ['group', 'supergroup']:
         chat = message.chat
@@ -248,7 +248,7 @@ async def add_channel(message: types.Message):
                 "✅ Foydalanuvchilarni cheklash (ban qilish)\n"
                 "✅ Xabarlarni pin qilish\n"
                 "✅ Xabar yuborish va o‘zgartirish\n\n"
-                "Botni *administrator* qilib, ushbu ruxsatlarni bering va `/add @channel_username` buyrug'ini yuboring!",
+                "Botni *administrator* qilib, ushbu ruxsatlarni bering va `/kanal @channel_username` buyrug'ini yuboring!",
                 parse_mode="Markdown"
             )
 
@@ -273,7 +273,7 @@ async def add_channel(message: types.Message):
             sm = await message.bot.send_message(
                 chat_id=message.chat.id,
                 text="ℹ️ Iltimos, buyruq bilan birga kanal username-ni ham yuboring.\n\n"
-                "📌 Misol: `/add @channel_username`",
+                "📌 Misol: `/kanal @channel_username`",
                 parse_mode="Markdown"
             )
             await delete_message(message)
@@ -287,7 +287,7 @@ async def add_channel(message: types.Message):
                 text=(
                     f"📢 Guruh allaqachon <a href='https://t.me/{channel.username.lstrip('@')}'>{channel.title}</a> "
                     "kanaliga ulangan.\n\n"
-                    "➖ Yangi kanal qo‘shish uchun avval <b>/remove_channel</b> buyrug‘ini yuborib, avvalgi kanalni ajrating."
+                    "➖ Yangi kanal qo‘shish uchun avval <b>/kanal_off</b> buyrug‘ini yuborib, avvalgi kanalni ajrating."
                 ),
                 parse_mode="HTML"
             )
@@ -322,7 +322,7 @@ async def add_channel(message: types.Message):
                     "✅ Post joylash\n"
                     "✅ Postlarni o‘chirish\n"
                     "✅ Obunachilarni boshqarish\n\n"
-                    "So‘ng, qaytadan `/add @channel_username` buyrug'ini yuboring!",
+                    "So‘ng, qaytadan `/kanal @channel_username` buyrug'ini yuboring!",
                     parse_mode="Markdown"
                 )
                 await delete_message(message)
@@ -343,7 +343,7 @@ async def add_channel(message: types.Message):
         sm = await message.bot.send_message(
             chat_id=message.chat.id,
             text="❌ Bu buyruq faqat guruhlarda ishlaydi!\n\n"
-                 "ℹ️ Guruhga kanalni bog'lash uchun guruh ichida /add buyrug'ini yuboring."
+                 "ℹ️ Guruhga kanalni bog'lash uchun guruh ichida /kanal buyrug'ini yuboring."
         )
 
         await delete_message(message)
@@ -353,7 +353,7 @@ async def add_channel(message: types.Message):
 
 
 # Guruhni kanaldan ajratish
-@group_router.message(Command("remove_channel"))
+@group_router.message(Command("kanal_off"))
 async def remove_channel(message: types.Message):
     if message.chat.type in ['group', 'supergroup']:
         chat = message.chat
@@ -406,7 +406,7 @@ async def remove_channel(message: types.Message):
             sm = await message.bot.send_message(
                 chat_id=message.chat.id,
                 text=f"📢 Guruh [ {channel.title} ](https://t.me/{channel.username[1:]}) kanalidan uzildi.\n\n"
-                f"➖ Yangi kanal qo‘shish uchun avval `/add @channel_username` buyrug‘ini yuborib yangi kanal qo'shishingiz mumkin",
+                f"➖ Yangi kanal qo‘shish uchun avval `/kanal @channel_username` buyrug‘ini yuborib yangi kanal qo'shishingiz mumkin",
                 parse_mode="Markdown"
             )
             await delete_message(message)
@@ -417,7 +417,7 @@ async def remove_channel(message: types.Message):
             chat_id=message.chat.id,
             text="❌ Guruhga hali hech qanday kanal ulanmadi.\n\n"
             "➕ Yangi kanal qo‘shish uchun quyidagi buyruqni yuboring:\n"
-            "`/add @channel_username`",
+            "`/kanal @channel_username`",
             parse_mode="Markdown"
         )
         await delete_message(message)
@@ -427,7 +427,7 @@ async def remove_channel(message: types.Message):
         sm = await message.bot.send_message(
             chat_id=message.chat.id,
             text="❌ Bu buyruq faqat guruhlarda ishlaydi!\n\n"
-                 "ℹ️ Guruhdan kanalni ajratish uchun guruh ichida /remove_channel buyrug'ini yuboring."
+                 "ℹ️ Guruhdan kanalni ajratish uchun guruh ichida /kanal_off buyrug'ini yuboring."
         )
 
         await delete_message(message)
@@ -436,50 +436,68 @@ async def remove_channel(message: types.Message):
         asyncio.create_task(delete_after_delay(sm.chat.id, sm.message_id, AUTO_DELETE_TIME_INTERVAL))
 
 
-@group_router.message(Command("top10"))
+@group_router.message(Command("top"))
 async def top10_invites(message: types.Message):
     if message.chat.type == 'private':
-        await message.bot.send_message(
+        sm = await message.bot.send_message(
             chat_id=message.chat.id,
             text="❌ Bu buyruq faqat guruhlarda ishlaydi!\n\n"
         )
         await delete_message(message)
+        asyncio.create_task(delete_after_delay(sm.chat.id, sm.message_id, AUTO_DELETE_TIME_INTERVAL))
         return
 
-    group_chat_id = message.chat.id  # 🔥 Hozirgi guruh ID sini olish
+    group_chat_id = message.chat.id
+    user_id = message.from_user.id
+
+    # Admin yoki egasi ekanligini tekshirish
+    chat_member = await message.bot.get_chat_member(group_chat_id, user_id)
+    if chat_member.status not in ["administrator", "creator"]:
+        sm = await message.bot.send_message(message.chat.id, "❌ Bu buyruq faqat guruh administratorlari uchun!")
+        asyncio.create_task(delete_after_delay(sm.chat.id, sm.message_id, AUTO_DELETE_TIME_INTERVAL))
+        await delete_message(message)
+        return
+
     top_users = await Invite.get_top_invites(group_chat_id, 10)
 
     if not top_users:
-        await message.reply("📊 Hali hech kim bu guruhda taklif qilmagan.")
+        sm = await message.bot.send_message(
+            chat_id=message.chat.id,
+            text="📊 Hali hech kim taklif qilmagan."
+        )
+        asyncio.create_task(delete_after_delay(sm.chat.id, sm.message_id, AUTO_DELETE_TIME_INTERVAL))
+        await delete_message(message)
         return
 
-    text = f"🏆 <b>{message.chat.title}</b> guruhidagi eng ko‘p odam qo‘shganlar:\n\n"
+    text = f"🏆 <b>{message.chat.title}</b> - guruhidagi eng ko‘p odam qo‘shganlar:\n\n"
     for index, (user_id, count) in enumerate(top_users, start=1):
         try:
             user = await message.bot.get_chat(user_id)
-            full_name = user.full_name if user else f"Foydalanuvchi {user_id}"
-        except:
-            full_name = f"Foydalanuvchi {user_id}"  # Agar user topilmasa
+            user_name = f"<a href='tg://user?id={user_id}'>{user.full_name}</a>"
+        except Exception:
+            user_name = f"ID: {user_id}"
 
-        text += f"{index}. <a href='tg://user?id={user_id}'>{full_name}</a> - {count} ta odam\n"
+        text += f"{index}. {user_name} - {count} ta odam\n"
 
-    sm = await message.reply(text, parse_mode="HTML")
+    sm = await message.bot.send_message(message.chat.id, text, parse_mode="HTML")
     asyncio.create_task(delete_after_delay(sm.chat.id, sm.message_id, AUTO_DELETE_TIME_INTERVAL))
-    asyncio.create_task(delete_after_delay(message.chat.id, message.message_id, AUTO_DELETE_TIME_INTERVAL))
+    await delete_message(message)
 
 
-@group_router.message(Command("my_count"))
+@group_router.message(Command("meni"))
 async def my_invite_count(message: types.Message):
     if message.chat.type == 'private':
-        await message.bot.send_message(
+        sm = await message.bot.send_message(
             chat_id=message.chat.id,
             text="❌ Bu buyruq faqat guruhlarda ishlaydi!\n\n"
         )
+        asyncio.create_task(delete_after_delay(sm.chat.id, sm.message_id, AUTO_DELETE_TIME_INTERVAL))
         await delete_message(message)
         return
 
     user_id = message.from_user.id
-    invite_count = await Invite.get_user_invite_count(user_id)
+    group_chat_id = message.chat.id
+    invite_count = await Invite.get_user_invite_count(user_id, group_chat_id)
     user_mention = f"<a href='tg://user?id={user_id}'>{message.from_user.full_name}</a>"
 
     sm = await message.bot.send_message(
@@ -495,27 +513,227 @@ async def my_invite_count(message: types.Message):
     await delete_message(message)
 
 
+@group_router.message(Command("sizni"))
+async def someone_invite_count(message: types.Message):
+    if message.chat.type == 'private':
+        sm = await message.bot.send_message(
+            chat_id=message.chat.id,
+            text="❌ Bu buyruq faqat guruhlarda ishlaydi!\n\n"
+        )
+        await delete_message(message)
+        asyncio.create_task(delete_after_delay(sm.chat.id, sm.message_id, AUTO_DELETE_TIME_INTERVAL))
+        return
+
+    # Admin yoki guruh egasi ekanligini tekshiramiz
+    chat_member = await message.bot.get_chat_member(message.chat.id, message.from_user.id)
+    if chat_member.status not in ["administrator", "creator"]:
+        sm = await message.bot.send_message(message.chat.id, "❌ Bu buyruq faqat guruh administratorlari uchun!")
+        asyncio.create_task(delete_after_delay(sm.chat.id, sm.message_id, AUTO_DELETE_TIME_INTERVAL))
+        await delete_message(message)
+        return
+
+    # Faqat reply yoki chat ID orqali ishlashi kerak
+    user_id = None
+
+    if message.reply_to_message:
+        user_id = message.reply_to_message.from_user.id
+    else:
+        args = message.text.split(maxsplit=1)
+        if len(args) == 1:
+            sm = await message.bot.send_message(message.chat.id, f"❗ <a href='tg://user?id={user_id}'>{message.from_user.full_name}</a> Iltimos, birorta xabarga reply qiling yoki chat ID yozing.")
+            asyncio.create_task(delete_after_delay(sm.chat.id, sm.message_id, AUTO_DELETE_TIME_INTERVAL))
+            await delete_message(message)
+            return
+
+        try:
+            user_id = int(args[1])  # Faqat son (ID) bo'lishi kerak
+        except ValueError:
+            sm = await message.bot.send_message(
+                message.chat.id,
+                text="❌ <a href='tg://user?id={message.from_user.id}'>{message.from_user.full_name} "
+                     "Faqat reply qilish yoki chat ID yozish mumkin!",
+                parse_mode="HTML"
+            )
+            asyncio.create_task(delete_after_delay(sm.chat.id, sm.message_id, AUTO_DELETE_TIME_INTERVAL))
+            await delete_message(message)
+            return
+
+    # ID topilganidan keyin, foydalanuvchi nechta odam qo‘shganini tekshiramiz
+    group_chat_id = message.chat.id
+    invite_count = await Invite.get_user_invite_count(user_id, group_chat_id)
+
+    sm = await message.bot.send_message(
+        chat_id=message.chat.id,
+        text=(
+            f"📊 <a href='tg://user?id={user_id}'>{message.reply_to_message.from_user.full_name}</a> "
+            f"shu guruhga <b>{invite_count}</b> ta odam qo‘shgan.\n"
+        ),
+        parse_mode="HTML"
+    )
+    asyncio.create_task(delete_after_delay(sm.chat.id, sm.message_id, AUTO_DELETE_TIME_INTERVAL))
+    await delete_message(message)
+
+
+@group_router.message(Command("nol"))
+async def one_reset_invite_count(message: types.Message):
+    if message.chat.type == 'private':
+        sm = await message.bot.send_message(
+            chat_id=message.chat.id,
+            text="❌ Bu buyruq faqat guruhlarda ishlaydi!\n\n"
+        )
+        await delete_message(message)
+        asyncio.create_task(delete_after_delay(sm.chat.id, sm.message_id, AUTO_DELETE_TIME_INTERVAL))
+        return
+
+    # Admin yoki guruh egasi ekanligini tekshiramiz
+    chat_member = await message.bot.get_chat_member(message.chat.id, message.from_user.id)
+    if chat_member.status not in ["administrator", "creator"]:
+        sm = await message.bot.send_message(message.chat.id, "❌ Bu buyruq faqat guruh administratorlari uchun!")
+        asyncio.create_task(delete_after_delay(sm.chat.id, sm.message_id, AUTO_DELETE_TIME_INTERVAL))
+        await delete_message(message)
+        return
+
+    if not message.reply_to_message:
+        sm = await message.bot.send_message(message.chat.id, "❗ Iltimos, biror xabarga reply qilib /nol deb yozing.")
+        asyncio.create_task(delete_after_delay(sm.chat.id, sm.message_id, AUTO_DELETE_TIME_INTERVAL))
+        await delete_message(message)
+        return
+
+    user_id = message.reply_to_message.from_user.id
+    group_chat_id = message.chat.id
+    await Invite.reset_user_invite_count(user_id, group_chat_id)
+
+    sm = await message.bot.send_message(
+        chat_id=message.chat.id,
+        text=f"🔄 <a href='tg://user?id={user_id}'>{message.reply_to_message.from_user.full_name}</a> "
+             f"takliflari 0 ga tushirildi.",
+        parse_mode="HTML"
+    )
+
+    asyncio.create_task(delete_after_delay(sm.chat.id, sm.message_id, AUTO_DELETE_TIME_INTERVAL))
+    await delete_message(message)
+
+
+@group_router.message(Command("del"))
+async def all_reset_invite_count(message: types.Message):
+    if message.chat.type == 'private':
+        sm = await message.bot.send_message(
+            chat_id=message.chat.id,
+            text="❌ Bu buyruq faqat guruhlarda ishlaydi!\n\n"
+        )
+        await delete_message(message)
+        asyncio.create_task(delete_after_delay(sm.chat.id, sm.message_id, AUTO_DELETE_TIME_INTERVAL))
+        return
+
+    # Admin yoki guruh egasi ekanligini tekshiramiz
+    chat_member = await message.bot.get_chat_member(message.chat.id, message.from_user.id)
+    if chat_member.status not in ["administrator", "creator"]:
+        sm = await message.bot.send_message(message.chat.id, "❌ Bu buyruq faqat guruh administratorlari uchun!")
+        asyncio.create_task(delete_after_delay(sm.chat.id, sm.message_id, AUTO_DELETE_TIME_INTERVAL))
+        await delete_message(message)
+        return
+
+    group_chat_id = message.chat.id
+    await Invite.reset_all_invites(group_chat_id)
+
+    sm = await message.bot.send_message(
+        chat_id=message.chat.id,
+        text=f"🔄 <a href='tg://user?id={group_chat_id}'>{message.chat.full_name}</a> "
+             f"obunachilari takliflari 0 ga tushirildi.",
+        parse_mode="HTML"
+    )
+
+    asyncio.create_task(delete_after_delay(sm.chat.id, sm.message_id, AUTO_DELETE_TIME_INTERVAL))
+    await delete_message(message)
+
+@group_router.message(Command("bal"))
+async def add_points_to_user(message: types.Message):
+    if message.chat.type == 'private':
+        sm = await message.bot.send_message(
+            chat_id=message.chat.id,
+            text="❌ Bu buyruq faqat guruhlarda ishlaydi!\n\n"
+        )
+        await delete_message(message)
+        asyncio.create_task(delete_after_delay(sm.chat.id, sm.message_id, AUTO_DELETE_TIME_INTERVAL))
+        return
+
+    # Admin yoki guruh egasi ekanligini tekshiramiz
+    chat_member = await message.bot.get_chat_member(message.chat.id, message.from_user.id)
+    if chat_member.status not in ["administrator", "creator"]:
+        sm = await message.bot.send_message(message.chat.id, "❌ Bu buyruq faqat guruh administratorlari uchun!")
+        asyncio.create_task(delete_after_delay(sm.chat.id, sm.message_id, AUTO_DELETE_TIME_INTERVAL))
+        await delete_message(message)
+        return
+
+    # Faqat reply qilingan foydalanuvchiga ishlaydi
+    if not message.reply_to_message:
+        sm = await message.bot.send_message(message.chat.id, "❗ Iltimos, biror xabarga reply qilib '/bal son' yozing.")
+        asyncio.create_task(delete_after_delay(sm.chat.id, sm.message_id, AUTO_DELETE_TIME_INTERVAL))
+        await delete_message(message)
+        return
+
+    # Reply qilingan foydalanuvchi ID sini olish
+    user_id = message.reply_to_message.from_user.id
+    group_chat_id = message.chat.id
+
+    # Buyruqdan ball miqdorini olish
+    args = message.text.split(maxsplit=1)
+    if len(args) < 2:
+        sm = await message.bot.send_message(message.chat.id, "❗ Ball miqdorini yozishingiz kerak: '/bal son'")
+        asyncio.create_task(delete_after_delay(sm.chat.id, sm.message_id, AUTO_DELETE_TIME_INTERVAL))
+        await delete_message(message)
+        return
+
+    try:
+        ball_amount = int(args[1])
+    except ValueError:
+        sm = await message.bot.send_message(message.chat.id, "❌ Ball miqdori butun son bo‘lishi kerak!")
+        asyncio.create_task(delete_after_delay(sm.chat.id, sm.message_id, AUTO_DELETE_TIME_INTERVAL))
+        await delete_message(message)
+        return
+
+    existing_invite = await Invite.get_user_invite_count(user_id, group_chat_id)
+
+    if existing_invite is None:
+        await Invite.create(user_chat_id=user_id, group_chat_id=group_chat_id, count=ball_amount)
+    else:
+        await Invite.update_invite_count(user_id, group_chat_id, existing_invite + ball_amount)
+
+    sm = await message.bot.send_message(
+        chat_id=message.chat.id,
+        text=(
+            f"✅ <a href='tg://user?id={user_id}'>{message.reply_to_message.from_user.full_name}</a>'ga "
+            f"<b>{ball_amount}</b> ball qo‘shildi!\n"
+        ),
+        parse_mode="HTML"
+    )
+
+    await delete_message(message)
+    asyncio.create_task(delete_after_delay(sm.chat.id, sm.message_id, AUTO_DELETE_TIME_INTERVAL))
+
 
 @group_router.message(Command("help"))
 async def help_bot(message: types.Message):
-    help_text = (
-        "🤖 <b>Botda mavjud buyruqlar:</b>\n\n"
-        "🛠 <b>Admin buyruqlari:</b>\n"
-        "  ➤ <code>/add_admin [ID]</code> – Foydalanuvchini admin qilish.\n"
-        "  ➤ <code>/remove_admin [ID]</code> – Foydalanuvchidan adminlik huquqini olib tashlash.\n"
-        "  ➤ <code>/add [kanal_id]</code> – Kanalni botga qo‘shish.\n"
-        "  ➤ <code>/remove_channel [kanal_id]</code> – Kanalni botdan olib tashlash.\n"
-        "  ➤ <code>/activate</code> – Botni guruhda faollashtirish.\n"
-        "  ➤ <code>/deactivate</code> – Botni guruhda faolsizlantirish.\n"
-        "  ➤ <code>/word [so‘z]</code> – Bloklangan so‘zlar ro‘yxatiga yangi so‘z qo‘shish.\n"
-        "  ➤ <code>/count [son]</code> – Guruhda yozish uchun minimal odam sonini belgilash.\n\n"
-        "📌 <b>Foydalanuvchilar uchun buyruqlar:</b>\n"
-        "  ➤ <code>/start</code> – Botni ishga tushirish.\n"
-        "  ➤ <code>/help</code> – Botdagi mavjud buyruqlarni ko‘rish.\n"
-        "  ➤ <code>/my_count</code> – Men taklif qilgan odamlar sonini ko‘rish.\n"
-        "  ➤ <code>/top10</code> – Eng ko‘p odam qo‘shgan 10 ta foydalanuvchini ko‘rish.\n\n"
-        "❓ <b>Agar biror savolingiz bo‘lsa, administratorlarga murojaat qiling!</b>"
-    )
+    help_text = """
+    🤖 <b>Bot buyruqlari:</b>  
+
+    🔹 <code>/kanal [username]</code> – Kanalni qo‘shish.  
+    🔹 <code>/kanal_off</code> – Kanalni olib tashlash.  
+    🔹 <code>/activate</code> – Botni faollashtirish.  
+    🔹 <code>/deactivate</code> – Botni o‘chirish.  
+    🔹 <code>/word [so‘z]</code> – Bloklangan so‘z qo‘shish.  
+    🔹 <code>/guruh [son]</code> – Yozish uchun minimal odam sonini belgilash.  
+    🔹 <code>/start</code> – Botni ishga tushirish.  
+    🔹 <code>/help</code> – Buyruqlarni ko‘rish.  
+    🔹 <code>/meni</code> – Taklif qilgan odamlaringiz soni.  
+    🔹 <code>/sizni</code> – Reply yoki ID orqali kim qancha odam qo‘shganini ko‘rish.  
+    🔹 <code>/bal [son]</code> – Reply qilingan foydalanuvchiga ball qo‘shish.  
+    🔹 <code>/nol</code> – Reply qilingan foydalanuvchi ballini 0 qilish.  
+    🔹 <code>/del</code> – Guruhdagi barcha balllarni 0 qilish.  
+    🔹 <code>/top</code> – Eng ko‘p odam qo‘shgan 10 ta foydalanuvchini ko‘rish.  
+
+    ❓ <b>Savollar bo‘lsa, administratorga murojaat qiling!</b>
+    """
 
     sm = await message.bot.send_message(
         chat_id=message.chat.id,

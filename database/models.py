@@ -1,4 +1,4 @@
-from sqlalchemy import Column, BigInteger, String, Boolean, Integer, select, ForeignKey, func
+from sqlalchemy import Column, BigInteger, String, Boolean, Integer, select, ForeignKey, func, update, delete
 from sqlalchemy.orm import relationship
 
 from database.sessions import AsyncSessionLocal
@@ -249,13 +249,62 @@ class Invite(Base):
             return result.all()
 
     @classmethod
-    async def get_user_invite_count(cls, user_chat_id: int):
-        """Berilgan foydalanuvchi nechta odam qo‘shganligini qaytaradi."""
+    async def get_user_invite_count(cls, user_chat_id: int, group_chat_id: int):
+        """Foydalanuvchining faqat shu guruhga nechta odam qo‘shganini qaytaradi."""
         async with AsyncSessionLocal() as session:
             result = await session.execute(
-                select(func.sum(cls.count)).where(cls.user_chat_id == user_chat_id)
+                select(func.sum(cls.count)).where(
+                    cls.user_chat_id == user_chat_id,
+                    cls.group_chat_id == group_chat_id  # 🔥 Guruhni ham tekshiramiz
+                )
             )
             return result.scalar() or 0  # Agar natija bo‘lmasa, 0 qaytaradi
+
+    @classmethod
+    async def reset_user_invite_count(cls, user_chat_id: int, group_chat_id: int):
+        """Foydalanuvchining shu guruhdagi takliflarini 0 ga tushiradi."""
+        async with AsyncSessionLocal() as session:
+            await session.execute(
+                update(cls).where(
+                    cls.user_chat_id == user_chat_id,
+                    cls.group_chat_id == group_chat_id
+                ).values(count=0)
+            )
+            await session.commit()
+
+    @classmethod
+    async def reset_all_invites(cls, group_chat_id: int):
+        """Guruhdagi barcha odamlarning takliflarini 0 ga tushiradi."""
+        async with AsyncSessionLocal() as session:
+            await session.execute(
+                update(cls)
+                .where(cls.group_chat_id == group_chat_id)
+                .values(count=0)  # invite_count maydonini 0 ga o‘zgartiramiz
+            )
+            await session.commit()
+
+    @classmethod
+    async def create(cls, user_chat_id: int, group_chat_id: int, count: int = 0):
+        """Foydalanuvchini yaratish (agar bo'lmasa) yoki ball qo'shish."""
+        async with AsyncSessionLocal() as session:
+            invite = Invite(user_chat_id=user_chat_id, group_chat_id=group_chat_id, count=count)
+            session.add(invite)
+            await session.commit()
+
+    @classmethod
+    async def update_invite_count(cls, user_id: int, group_chat_id: int, new_invite_count: int):
+        """Foydalanuvchining takliflar/balini yangilash."""
+        async with AsyncSessionLocal() as session:
+            result = await session.execute(
+                select(cls).where(cls.user_chat_id == user_id, cls.group_chat_id == group_chat_id)
+            )
+            invite = result.scalar()
+
+            if invite:
+                invite.count = new_invite_count
+                await session.commit()
+            else:
+                await cls.create(user_id, group_chat_id, new_invite_count)
 
 
 class InviteHistory(Base):

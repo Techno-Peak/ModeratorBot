@@ -97,6 +97,7 @@ async def required_members(message: Message):
             sm = await message.bot.send_message(
                 chat_id=message.chat.id,
                 text="ℹ️ Iltimos, buyruq bilan birga majburiy qo'shilishi kerak bo'lgan odamlar sonini ham yuboring.\n\n"
+                     "Agar odam qo'shishni o'chirmoqchi bo'lsangiz <code>/guruh 0</code> buyrug'idan foydalaning\n\n"
                      "📌 Misol: <code>/guruh 5</code>",
                 parse_mode="HTML"
             )
