@@ -723,6 +723,7 @@ async def help_bot(message: types.Message):
     🔹 <code>/deactivate</code> – Botni o‘chirish.  
     🔹 <code>/word [so‘z]</code> – Bloklangan so‘z qo‘shish.  
     🔹 <code>/guruh [son]</code> – Yozish uchun minimal odam sonini belgilash.  
+    🔹 <code>/guruh 0</code> – Yozish uchun minimal odam sonini olib tashlash.  
     🔹 <code>/start</code> – Botni ishga tushirish.  
     🔹 <code>/help</code> – Buyruqlarni ko‘rish.  
     🔹 <code>/meni</code> – Taklif qilgan odamlaringiz soni.  
