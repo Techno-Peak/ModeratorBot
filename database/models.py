@@ -237,13 +237,13 @@ class Invite(Base):
             return self
 
     @classmethod
-    async def get_top_invites(cls, limit: int = 10):
-        """Eng ko‘p odam qo‘shgan foydalanuvchilarni qaytaradi."""
+    async def get_top_invites(cls, group_chat_id: int, limit: int = 10):
+        """Faqat bitta guruh ichida eng ko‘p odam qo‘shganlarni qaytaradi."""
         async with AsyncSessionLocal() as session:
             result = await session.execute(
-                select(cls.user_chat_id, func.sum(cls.count))
-                .group_by(cls.user_chat_id)
-                .order_by(func.sum(cls.count).desc())
+                select(cls.user_chat_id, cls.count)
+                .where(cls.group_chat_id == group_chat_id)  # 🔥 Faqat bitta guruhni tekshirish
+                .order_by(cls.count.desc())
                 .limit(limit)
             )
             return result.all()

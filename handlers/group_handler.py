@@ -446,16 +446,22 @@ async def top10_invites(message: types.Message):
         await delete_message(message)
         return
 
-    top_users = await Invite.get_top_invites(10)
+    group_chat_id = message.chat.id  # 🔥 Hozirgi guruh ID sini olish
+    top_users = await Invite.get_top_invites(group_chat_id, 10)
 
     if not top_users:
-        await message.reply("📊 Hali hech kim taklif qilmagan.")
+        await message.reply("📊 Hali hech kim bu guruhda taklif qilmagan.")
         return
 
-    text = "🏆 Eng ko‘p odam qo‘shganlar:\n\n"
+    text = f"🏆 <b>{message.chat.title}</b> guruhidagi eng ko‘p odam qo‘shganlar:\n\n"
     for index, (user_id, count) in enumerate(top_users, start=1):
-        user = await message.bot.get_chat(user_id)
-        text += f"{index}. <a href='tg://user?id={user_id}'>{user.full_name}</a> - {count} ta odam\n"
+        try:
+            user = await message.bot.get_chat(user_id)
+            full_name = user.full_name if user else f"Foydalanuvchi {user_id}"
+        except:
+            full_name = f"Foydalanuvchi {user_id}"  # Agar user topilmasa
+
+        text += f"{index}. <a href='tg://user?id={user_id}'>{full_name}</a> - {count} ta odam\n"
 
     sm = await message.reply(text, parse_mode="HTML")
     asyncio.create_task(delete_after_delay(sm.chat.id, sm.message_id, AUTO_DELETE_TIME_INTERVAL))
