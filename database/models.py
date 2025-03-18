@@ -1,9 +1,32 @@
-from sqlalchemy import Column, BigInteger, String, Boolean, Integer, select, ForeignKey, func, update, delete
+from sqlalchemy import Column, BigInteger, String, Boolean, Integer, select, ForeignKey, func, update, delete, text
 from sqlalchemy.orm import relationship
 
 from database.sessions import AsyncSessionLocal
 from .base import Base
 
+
+async def get_alembic_version():
+    async with AsyncSessionLocal() as session:
+        result = await session.execute(text("SELECT version_num FROM alembic_version"))
+        version = result.scalar()
+        print(f"Alembic Version: {version}")
+
+
+async def update_alembic_version(new_version: str = None):
+    async with AsyncSessionLocal() as session:
+        # Alembic versiyasini olish
+        result = await session.execute(text("SELECT version_num FROM alembic_version"))
+        version = result.scalar()
+
+        if version:
+            print(f"Joriy Alembic versiyasi: {version}")
+
+        if new_version:
+            # Yangi versiyani o'zgartirish
+            await session.execute(text("UPDATE alembic_version SET version_num = :new_version"),
+                                  {"new_version": new_version})
+            await session.commit()
+            print(f"Alembic versiyasi {new_version} ga yangilandi!")
 
 
 class User(Base):
