@@ -317,7 +317,8 @@ async def add_admin(message: Message):
 
 admin_keyboard = ReplyKeyboardMarkup(
             keyboard=[
-                [KeyboardButton(text="📩 Xabar yuborish")]
+                [KeyboardButton(text="📩 Xabar yuborish")],
+                [KeyboardButton(text="📊 Statistika")],
             ],
             resize_keyboard=True
         )
@@ -339,6 +340,26 @@ async def welcomeAdminpanel(message: Message):
 class SendMessageState(StatesGroup):
     waiting_for_message = State()
     waiting_for_choice = State()
+
+
+@admin_router.message(F.text == "📊 Statistika")
+async def sendMessageTypes(message: Message, state: FSMContext):
+    user_id = message.from_user.id
+    user = await User.get_user(user_id)
+
+    if message.chat.type == 'private' and user.is_admin:
+        group_count = await Group.get_group_count()
+        private_user_count = await User.get_private_user_count()
+
+        await message.answer(
+            f"📌 Bot statistikasi\n\n"
+            f"📊 Guruhlar soni: <b>{group_count}</b>\n"
+            f"👤 Foydalanuvchilar soni: <b>{private_user_count}</b>",
+            reply_markup=admin_keyboard,
+            parse_mode="HTML"
+        )
+    else:
+        await delete_message(message)
 
 
 @admin_router.message(F.text == "📩 Xabar yuborish")

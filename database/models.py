@@ -20,6 +20,12 @@ class User(Base):
     count = Column(Integer, default=0)
 
     @classmethod
+    async def get_private_user_count(cls):
+        async with AsyncSessionLocal() as session:
+            res = await session.scalar(select(func.count()).select_from(cls).where(cls.is_private == True))
+        return res
+
+    @classmethod
     async def get_or_create(cls, chat_id: int, username: str = None, first_name: str = None, 
                             last_name: str = None, is_admin: bool = False, is_permission: bool = False,
                             is_private: bool = False):
@@ -86,6 +92,12 @@ class Group(Base):
     required_channel = Column(BigInteger, nullable=True)
     is_admin = Column(Boolean, default=False)
     is_activate = Column(Boolean, default=False)
+
+    @classmethod
+    async def get_group_count(cls):
+        async with AsyncSessionLocal() as session:
+            res = await session.scalar(select(func.count()).select_from(cls))
+            return res
 
     @classmethod
     async def get_or_create(cls, chat_id: int, title: str = None):
