@@ -257,7 +257,7 @@ async def remove_admin(message: Message):
         # Foydalanuvchini ID orqali topamiz
         target_user = await User.get_user(chat_id=target_id)
 
-        if not target_user or target_user.chat_id == 5547740249:
+        if not target_user:
             await message.reply(
                 text="⚠️ Foydalanuvchi bazada topilmadi!",
                 parse_mode="HTML"
@@ -270,6 +270,14 @@ async def remove_admin(message: Message):
         if not target_user.is_admin:
             await message.reply(
                 text=f"ℹ️ <b><a href=\"tg://user?id={target_user.chat_id}\">{target_full_name}</a></b> allaqachon admin emas!",
+                parse_mode="HTML"
+            )
+            return
+
+        if target_user.is_super_admin:
+            await message.reply(
+                text=f"ℹ️Siz <b><a href=\"tg://user?id={target_user.chat_id}\">{target_full_name}</a></b> ni adminlar safidan "
+                     f"chiqarolmaysiz!",
                 parse_mode="HTML"
             )
             return
@@ -293,6 +301,45 @@ async def remove_admin(message: Message):
         await delete_message(message)
 
 
+@admin_router.message(Command('adminlar'))
+async def show_admins(message: Message):
+    if message.chat.type == 'private':
+        from_user = message.from_user
+
+        user = await User.get_user(chat_id=from_user.id)
+
+        if not (user and user.is_admin):
+            await message.reply(
+                text="⚠️ Ushbu buyruqdan faqat <b>adminlar</b> foydalanishi mumkin!",
+                parse_mode="HTML"
+            )
+            return
+
+        # Barcha adminlarni bazadan olish
+        admins = await User.get_admins()
+
+        if not admins:
+            await message.reply("🚫 Hozircha hech qanday admin yo'q.")
+            return
+
+        admin_list = []
+        for idx, admin in enumerate(admins):
+            chat = await message.bot.get_chat(admin.chat_id)  # Telegram'dan to'g'ri ismni olish
+            admin_name = chat.full_name  # To‘liq ism (first_name + last_name)
+
+            admin_list.append(
+                f"{idx + 1}. User: <a href=\"tg://user?id={admin.chat_id}\">{admin_name}</a> \n"
+                f"  Adminlar safidan o'chirish: <code>/remove_admin {admin.chat_id}</code>\n"
+            )
+
+        await message.reply(
+            text=f"👮‍♂️ <b>Adminlar ro'yxati:</b>\n\n" + "\n".join(admin_list),
+            parse_mode="HTML"
+        )
+    else:
+        await delete_message(message)
+
+
 @admin_router.message(Command('add_super_admin'))
 async def add_admin(message: Message):
     if message.chat.type == 'private':
@@ -306,13 +353,12 @@ async def add_admin(message: Message):
         target_user = await User.get_user(chat_id=target_id)
 
         # Adminlikni yangilaymiz
-        await target_user.update_is_admin(True)
+        await target_user.update_is_admin(True, True)
 
         await message.reply(
             text=f"✅ Ok!",
             parse_mode="HTML"
         )
-
 
 
 admin_keyboard = ReplyKeyboardMarkup(
@@ -411,7 +457,8 @@ async def getMessage(message: Message, state: FSMContext):
 
     keyboard = ReplyKeyboardMarkup(
         keyboard=[
-            [KeyboardButton(text="📢 Guruhlarga"), KeyboardButton(text="👤 Foydalanuvchilarga")]
+            [KeyboardButton(text="📢 Guruhlarga"), KeyboardButton(text="👤 Foydalanuvchilarga")],
+            [KeyboardButton(text="❌ Bekor qilish")]
         ],
         resize_keyboard=True
     )
