@@ -6,6 +6,7 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
 
 from database.models import BlockedWord, User, Group
+from config import bot
 from handlers.utils import delete_after_delay, AUTO_DELETE_TIME_INTERVAL, delete_message
 
 admin_router = Router()
@@ -354,7 +355,7 @@ async def sendMessageTypes(message: Message, state: FSMContext):
     
     if message.chat.type == 'private' and user.is_admin:
         await message.answer(
-            "📌 *Yubormoqchi bo'lgan xabaringizni forward qiling!*",
+            "📌 *Yubormoqchi bo'lgan xabaringizni kiriting yoki forward qiling!*",
             reply_markup=reply_keyboard,
             parse_mode="Markdown"
         )
@@ -380,9 +381,12 @@ async def sendMessageTypes(message: Message, state: FSMContext):
         await delete_message(message)
 
 
-@admin_router.message(SendMessageState.waiting_for_message, F.forward_from | F.forward_from_chat)
-async def getForwardMessage(message: Message, state: FSMContext):
-    await state.update_data(forward_message=message)
+@admin_router.message(SendMessageState.waiting_for_message)
+async def getMessage(message: Message, state: FSMContext):
+    if message.forward_from or message.forward_from_chat:
+        await state.update_data(forward_message=message)
+    else:
+        await state.update_data(text_message=message.text)
 
     keyboard = ReplyKeyboardMarkup(
         keyboard=[
@@ -396,15 +400,11 @@ async def getForwardMessage(message: Message, state: FSMContext):
     await state.set_state(SendMessageState.waiting_for_choice)
 
 
-@admin_router.message(SendMessageState.waiting_for_message)
-async def rejectNonForwardMessages(message: Message):
-    await message.answer("⚠️ *Iltimos, faqat forward qilingan xabar yuboring!*", parse_mode="Markdown")
-
-
 @admin_router.message(SendMessageState.waiting_for_choice, F.text.in_(["📢 Guruhlarga", "👤 Foydalanuvchilarga"]))
-async def forwardMessage(message: Message, state: FSMContext):
+async def forwardOrSendMessage(message: Message, state: FSMContext):
     data = await state.get_data()
     forward_message = data.get("forward_message")
+    text_message = data.get("text_message")
     users = await User.get_private_users()
     groups = await Group.get_all_groups()
 
@@ -418,15 +418,18 @@ async def forwardMessage(message: Message, state: FSMContext):
         target_users = [user.chat_id for user in users]
         target = "👤 Foydalanuvchilarga yuborildi!"
     
-    async def forward_to_target(chat_id):
+    async def send_to_target(chat_id):
         try:
             await asyncio.sleep(0.1)
-            await forward_message.forward(chat_id=chat_id)
+            if forward_message:
+                await forward_message.forward(chat_id=chat_id)
+            elif text_message:
+                await bot.send_message(chat_id=chat_id, text=text_message)
             return (chat_id, True)
         except Exception:
             return (chat_id, False)
     
-    tasks = [forward_to_target(chat_id) for chat_id in target_users + target_groups]
+    tasks = [send_to_target(chat_id) for chat_id in target_users + target_groups]
     results = await asyncio.gather(*tasks)
 
     success_count = sum(1 for _, success in results if success)
@@ -441,4 +444,5 @@ async def forwardMessage(message: Message, state: FSMContext):
     )
 
     await state.clear()
+
 
