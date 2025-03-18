@@ -72,7 +72,7 @@ async def handle_message_user(message: Message):
                 except Exception as e:
                     print(f"Forward xabarni o‘chirishda xatolik: {e}")
 
-            elif message.text and has_link(message.text):
+            elif message.text and has_link(message.html_text):
                 try:
                     await delete_message(message)
                     sm = await message.bot.send_message(
@@ -184,7 +184,7 @@ async def edited_message(message: Message):
                 except Exception as e:
                     print(f"Forward xabarni o‘chirishda xatolik: {e}")
 
-            elif message.text and has_link(message.text):
+            elif message.text and has_link(message.html_text):
                 try:
                     await delete_message(message)
                     sm = await message.bot.send_message(
