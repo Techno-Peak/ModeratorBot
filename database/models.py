@@ -53,6 +53,13 @@ class User(Base):
             if not existing_user:
                 return None
             return existing_user
+        
+    @classmethod
+    async def get_private_users(cls):
+        async with AsyncSessionLocal() as session:
+            stmt = select(cls).where(cls.is_private == True)
+            result = await session.execute(stmt)
+            return result.scalars().all()
 
     async def update_is_private(self, is_private: bool = False):
         async with AsyncSessionLocal() as session:
@@ -108,6 +115,13 @@ class Group(Base):
             if existing_user:
                 return existing_user
             return None
+         
+    @classmethod
+    async def get_all_groups(cls):
+        async with AsyncSessionLocal() as session:
+            stmt = select(cls)
+            result = await session.execute(stmt)
+            return result.scalars().all()
 
     @classmethod
     async def _is_activate(cls, chat_id):

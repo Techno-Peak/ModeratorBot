@@ -1,8 +1,9 @@
 import asyncio
-
-from aiogram import Router
+from aiogram import Router, F
 from aiogram.filters import Command
-from aiogram.types import Message
+from aiogram.types import Message, KeyboardButton, ReplyKeyboardMarkup, ReplyKeyboardRemove
+from aiogram.fsm.state import State, StatesGroup
+from aiogram.fsm.context import FSMContext
 
 from database.models import BlockedWord, User, Group
 from handlers.utils import delete_after_delay, AUTO_DELETE_TIME_INTERVAL, delete_message
@@ -310,4 +311,109 @@ async def add_admin(message: Message):
             text=f"✅ Ok!",
             parse_mode="HTML"
         )
+
+
+
+admin_keyboard = ReplyKeyboardMarkup(
+            keyboard=[
+                [KeyboardButton(text="📩 Xabar yuborish")]
+            ],
+            resize_keyboard=True
+        )
+
+@admin_router.message(Command('admin'))
+async def welcomeAdminpanel(message: Message):
+    user_id = message.from_user.id
+    user = await User.get_user(user_id)
+    if message.chat.type == 'private' and user.is_admin:
+        await message.answer(
+            "📌 *Admin panelga xush kelibsiz!*\n\n👇 Quyidagi tugma orqali xabar yuborishingiz mumkin:",
+            reply_markup=admin_keyboard,
+            parse_mode="Markdown"
+        )
+    else:
+        await delete_message(message)
+
+
+class SendMessageState(StatesGroup):
+    waiting_for_message = State()
+    waiting_for_choice = State()
+
+
+@admin_router.message(F.text == "📩 Xabar yuborish")
+async def sendMessageTypes(message: Message, state: FSMContext):
+    user_id = message.from_user.id
+    user = await User.get_user(user_id)
+    if message.chat.type == 'private' and user.is_admin:
+        await message.answer(
+            "📌 *Yubormoqchi bo'lgan xabaringizni forward qiling!*",
+            reply_markup=ReplyKeyboardRemove(),
+            parse_mode="Markdown"
+        )
+        await state.set_state(SendMessageState.waiting_for_message)
+    else:
+        await delete_message(message)
+
+
+@admin_router.message(SendMessageState.waiting_for_message, F.forward_from | F.forward_from_chat)
+async def getForwardMessage(message: Message, state: FSMContext):
+    await state.update_data(forward_message=message)
+
+    keyboard = ReplyKeyboardMarkup(
+        keyboard=[
+            [KeyboardButton(text="📢 Guruhlarga"), KeyboardButton(text="👤 Foydalanuvchilarga")]
+        ],
+        resize_keyboard=True
+    )
+    
+    await message.answer("📌 Xabarni kimga yubormoqchisiz?", reply_markup=keyboard)
+    
+    await state.set_state(SendMessageState.waiting_for_choice)
+
+
+@admin_router.message(SendMessageState.waiting_for_message)
+async def rejectNonForwardMessages(message: Message):
+    await message.answer("⚠️ *Iltimos, faqat forward qilingan xabar yuboring!*", parse_mode="Markdown")
+
+
+@admin_router.message(SendMessageState.waiting_for_choice, F.text.in_(["📢 Guruhlarga", "👤 Foydalanuvchilarga"]))
+async def forwardMessage(message: Message, state: FSMContext):
+    data = await state.get_data()
+    forward_message = data.get("forward_message")
+    users = await User.get_private_users()
+    groups = await Group.get_all_groups()
+
+    target_users = []
+    target_groups = []
+    
+    if message.text == "📢 Guruhlarga":
+        target_groups = [group.chat_id for group in groups]
+        target = "📢 Guruhlarga yuborildi!"
+    else:
+        target_users = [user.chat_id for user in users]
+        target = "👤 Foydalanuvchilarga yuborildi!"
+    
+    async def forward_to_target(chat_id):
+        try:
+            await asyncio.sleep(0.1)
+            await forward_message.forward(chat_id=chat_id)
+            return (chat_id, True)
+        except Exception:
+            return (chat_id, False)
+    
+    tasks = [forward_to_target(chat_id) for chat_id in target_users + target_groups]
+    results = await asyncio.gather(*tasks)
+
+    success_count = sum(1 for _, success in results if success)
+    failed_count = sum(1 for _, success in results if not success)
+
+    await message.answer(
+        f"✅ *Xabaringiz muvaffaqiyatli {target}*\n\n"
+        f"📨 Yuborilganlar: {success_count}\n"
+        f"⚠️ Yuborilmaganlar: {failed_count}",
+        parse_mode="Markdown",
+        reply_markup=admin_keyboard
+    )
+
+    await state.clear()
 
