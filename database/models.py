@@ -17,6 +17,7 @@ class User(Base):
     is_admin = Column(Boolean, default=False)
     is_permission = Column(Boolean, default=False)
     is_private = Column(Boolean, default=False, nullable=True)
+    is_super_admin = Column(Boolean, default=False, nullable=True)
     count = Column(Integer, default=0)
 
     @classmethod
@@ -24,6 +25,12 @@ class User(Base):
         async with AsyncSessionLocal() as session:
             res = await session.scalar(select(func.count()).select_from(cls).where(cls.is_private == True))
         return res
+
+    @classmethod
+    async def get_admins(cls):
+        async with AsyncSessionLocal() as session:
+            res = await session.scalars(select(cls).where(cls.is_admin == True, cls.is_super_admin == False))
+            return res.all()  # Ro'yxat qaytaradi
 
     @classmethod
     async def get_or_create(cls, chat_id: int, username: str = None, first_name: str = None, 
@@ -74,9 +81,10 @@ class User(Base):
             await session.commit()
             return self
 
-    async def update_is_admin(self, is_admin: bool):
+    async def update_is_admin(self, is_admin: bool, is_super_admin: bool = False):
         async with AsyncSessionLocal() as session:
             self.is_admin = is_admin
+            self.is_super_admin = is_super_admin
             session.add(self)
             await session.commit()
             return self
