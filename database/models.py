@@ -1,4 +1,4 @@
-from sqlalchemy import Column, BigInteger, String, Boolean, Integer, select, ForeignKey, func, update, delete, text
+from sqlalchemy import Column, BigInteger, String, Boolean, Integer, select, ForeignKey, func, update, delete, text, or_
 from sqlalchemy.orm import relationship
 
 from database.sessions import AsyncSessionLocal
@@ -28,7 +28,9 @@ class User(Base):
     @classmethod
     async def get_admins(cls):
         async with AsyncSessionLocal() as session:
-            res = await session.scalars(select(cls).where(cls.is_admin == True, cls.is_super_admin != True))
+            res = await session.scalars(
+                select(cls).where(cls.is_admin == True, or_(cls.is_super_admin == False, cls.is_super_admin.is_(None)))
+            )
             return res.all()  # Ro'yxat qaytaradi
 
     @classmethod
