@@ -1,7 +1,7 @@
 import asyncio
 from aiogram import Router, F
 from aiogram.filters import Command
-from aiogram.types import Message, KeyboardButton, ReplyKeyboardMarkup, ReplyKeyboardRemove
+from aiogram.types import Message, KeyboardButton, ReplyKeyboardMarkup
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
 
@@ -344,13 +344,38 @@ class SendMessageState(StatesGroup):
 async def sendMessageTypes(message: Message, state: FSMContext):
     user_id = message.from_user.id
     user = await User.get_user(user_id)
+
+    reply_keyboard = ReplyKeyboardMarkup(
+            keyboard=[
+                [KeyboardButton(text="❌ Bekor qilish")]
+            ],
+            resize_keyboard=True
+        )
+    
     if message.chat.type == 'private' and user.is_admin:
         await message.answer(
             "📌 *Yubormoqchi bo'lgan xabaringizni forward qiling!*",
-            reply_markup=ReplyKeyboardRemove(),
+            reply_markup=reply_keyboard,
             parse_mode="Markdown"
         )
         await state.set_state(SendMessageState.waiting_for_message)
+    else:
+        await delete_message(message)
+    
+
+@admin_router.message(F.text == "❌ Bekor qilish")
+async def sendMessageTypes(message: Message, state: FSMContext):
+    user_id = message.from_user.id
+    user = await User.get_user(user_id)
+
+    if message.chat.type == 'private' and user.is_admin:
+        await state.clear()
+        await message.answer(
+            "📌 *Bekor qilindi!*",
+            reply_markup=admin_keyboard,
+            parse_mode="Markdown"
+        )
+
     else:
         await delete_message(message)
 
