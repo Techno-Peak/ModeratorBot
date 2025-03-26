@@ -100,7 +100,7 @@ class Group(Base):
     required_members = Column(Integer, default=0)
     required_channel = Column(BigInteger, nullable=True)
     is_admin = Column(Boolean, default=False)
-    is_activate = Column(Boolean, default=False)
+    is_activate = Column(Boolean, default=True)
 
     @classmethod
     async def get_group_count(cls):
