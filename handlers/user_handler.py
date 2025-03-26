@@ -15,6 +15,7 @@ user_router = Router()
 @user_router.message()
 async def handle_message_user(message: Message):
     if message.chat.type in ['group', 'supergroup']:
+        chat = message.chat
         tg_user = message.from_user
         user = await User.get_or_create(
             chat_id=tg_user.id,
@@ -24,8 +25,23 @@ async def handle_message_user(message: Message):
         )
 
         _group = await Group.get_or_create(message.chat.id, message.chat.title)
+
         if not _group.is_activate:
-            return
+            bot_member = await message.bot.get_chat_member(chat.id, message.bot.id)
+            await _group.activate()
+
+            if bot_member.status in [ChatMemberStatus.ADMINISTRATOR]:
+                sm = await message.bot.send_message(
+                    chat_id=message.chat.id,
+                    text=(
+                        "✅ <b>Guruh muvaffaqiyatli faollashtirildi!</b>\n\n"
+                        f"🏷 <b>Guruh nomi:</b> <a href='tg://user?id={_group.chat_id}'>#{_group.title}</a>\n"
+                        "📢 Endi guruh a'zolari bot xizmatlaridan to‘liq foydalanishlari mumkin.\n"
+                    ),
+                    parse_mode="HTML"
+                )
+                asyncio.create_task(delete_after_delay(sm.chat.id, sm.message_id, AUTO_DELETE_TIME_INTERVAL))
+
 
         if message.left_chat_member:
             await delete_message(message)
