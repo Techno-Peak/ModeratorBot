@@ -28,9 +28,9 @@ async def handle_message_user(message: Message):
 
         if not _group.is_activate:
             bot_member = await message.bot.get_chat_member(chat.id, message.bot.id)
-            await _group.activate()
 
             if bot_member.status in [ChatMemberStatus.ADMINISTRATOR]:
+                await _group.activate()
                 sm = await message.bot.send_message(
                     chat_id=message.chat.id,
                     text=(
