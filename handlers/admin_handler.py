@@ -1,7 +1,8 @@
 import asyncio
 from aiogram import Router, F
 from aiogram.filters import Command
-from aiogram.types import Message, KeyboardButton, ReplyKeyboardMarkup
+from aiogram.types import Message, KeyboardButton, ReplyKeyboardMarkup, ReplyKeyboardRemove, InlineKeyboardMarkup, \
+    InlineKeyboardButton, CallbackQuery
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
 
@@ -10,6 +11,52 @@ from config import bot
 from handlers.utils import delete_after_delay, AUTO_DELETE_TIME_INTERVAL, delete_message
 
 admin_router = Router()
+
+
+@admin_router.message(Command('words'))
+async def list_blocked_words(message: Message):
+    if message.chat.type == 'private':
+        from_user = message.from_user
+
+        user = await User.get_user(chat_id=from_user.id)
+
+        if not (user and user.is_admin):
+            await message.reply(
+                text="⚠️ Ushbu buyruqdan faqat <b>adminlar</b> foydalanishi mumkin!\n\n",
+                parse_mode="HTML"
+            )
+            return
+
+        blocked_words = await BlockedWord.get_blocked_words()
+
+        if not blocked_words:
+            await message.reply(
+                text="📌 Bloklangan so‘zlar ro‘yxati bo‘sh.",
+                parse_mode="HTML"
+            )
+            return
+
+        chunk_size = 15  # Har bir xabarda 15 ta so‘z yuboramiz
+        for i in range(0, len(blocked_words), chunk_size):
+            words_chunk = blocked_words[i:i + chunk_size]  # 15 tadan ajratamiz
+            words_text = "\n".join([f"🔹 <b>{word}</b> - <code>/word {word}</code>" for word in words_chunk])  # Ro‘yxat ko‘rinishida chiqaramiz
+
+            await message.reply(
+                text=f"📌 Bloklangan so‘zlar:\n\n{words_text}\n\n"
+                     "🗑 O‘chirish uchun: <code>/word so‘z_nomi</code>",
+                parse_mode="HTML"
+            )
+
+    else:
+        sm = await message.bot.send_message(
+            chat_id=message.chat.id,
+            text="ℹ️ <b>/words</b> buyrug‘idan faqat bot bilan shaxsiy chatda foydalanish mumkin.\n\n"
+                 "Iltimos, ushbu buyruqni botga shaxsiy xabarda yuboring.",
+            parse_mode="HTML"
+        )
+        asyncio.create_task(delete_after_delay(sm.chat.id, sm.message_id, AUTO_DELETE_TIME_INTERVAL))
+        await delete_message(message)
+
 
 @admin_router.message(Command('word'))
 async def add_blocked_word(message: Message):
@@ -39,9 +86,16 @@ async def add_blocked_word(message: Message):
         # So‘z bazada bor yoki yo‘qligini tekshiramiz
         blocked_words = await BlockedWord.get_blocked_words()
         if new_word in blocked_words:
-            sm = await message.reply(
+            # ❌ O‘chirish tugmasi bilan inline klaviatura yaratamiz
+            keyboard = InlineKeyboardMarkup(
+                inline_keyboard=[
+                    [InlineKeyboardButton(text="🗑 O‘chirish", callback_data=f"delete_word:{new_word}")]
+                ]
+            )
+            await message.reply(
                 text=f"⚠️ <b>{new_word[0]}...{new_word[-1]}</b> so‘zi allaqachon bloklangan!",
-                parse_mode="HTML"
+                parse_mode="HTML",
+                reply_markup=keyboard
             )
         else:
             # Yangi so‘zni bazaga qo‘shamiz
@@ -60,6 +114,24 @@ async def add_blocked_word(message: Message):
         )
         asyncio.create_task(delete_after_delay(sm.chat.id, sm.message_id, AUTO_DELETE_TIME_INTERVAL))
         await delete_message(message)
+
+
+@admin_router.callback_query(lambda c: c.data.startswith("delete_word:"))
+async def delete_blocked_word(callback: CallbackQuery):
+    word_to_delete = callback.data.split(":")[1]  # Callbackdan so‘zni olamiz
+
+    # So‘zni bazadan o‘chiramiz
+    deleted = await BlockedWord.delete(word_to_delete)
+
+    if deleted:
+        await callback.message.edit_text(
+            text=f"✅ <b>{word_to_delete[0]}...{word_to_delete[-1]}</b> so‘zi bloklanganlar ro‘yxatidan olib tashlandi!",
+            parse_mode="HTML"
+        )
+        await callback.answer("O‘chirildi ✅")
+    else:
+        await callback.answer("⚠️ So‘z topilmadi yoki allaqachon o‘chirilgan!", show_alert=True)
+
 
 
 @admin_router.message(Command('guruh'))
@@ -365,6 +437,7 @@ admin_keyboard = ReplyKeyboardMarkup(
             keyboard=[
                 [KeyboardButton(text="📩 Xabar yuborish")],
                 [KeyboardButton(text="📊 Statistika")],
+                [KeyboardButton(text="Chiqish")],
             ],
             resize_keyboard=True
         )
@@ -386,6 +459,22 @@ async def welcomeAdminpanel(message: Message):
 class SendMessageState(StatesGroup):
     waiting_for_message = State()
     waiting_for_choice = State()
+
+
+@admin_router.message(F.text == "Chiqish")
+async def sendMessageTypes(message: Message, state: FSMContext):
+    user_id = message.from_user.id
+    user = await User.get_user(user_id)
+
+    if message.chat.type == 'private' and user.is_admin:
+        await message.answer(
+            "📌 *Admin paneldan chiqdingiz*",
+
+            parse_mode="Markdown",
+            reply_markup=ReplyKeyboardRemove(remove_keyboard=True)
+        )
+    else:
+        await delete_message(message)
 
 
 @admin_router.message(F.text == "📊 Statistika")
