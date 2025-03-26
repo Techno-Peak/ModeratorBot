@@ -1,9 +1,8 @@
 import asyncio
 import re
 from aiogram import Router
-from aiogram.types import Message, ChatMemberUpdated, InlineKeyboardMarkup, InlineKeyboardButton, ChatMember
+from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, ChatMember
 from aiogram.enums import ChatMemberStatus
-from aiogram.filters import ChatMemberUpdatedFilter, IS_NOT_MEMBER, IS_MEMBER
 from database.models import User, Group, BlockedWord, Invite
 from config import bot
 from handlers.utils import delete_after_delay, AUTO_DELETE_TIME_INTERVAL, delete_message

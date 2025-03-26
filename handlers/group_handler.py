@@ -15,7 +15,6 @@ NOT_ADMIN_TEXT = "🚫 Sizda ushbu buyruqni ishlatish uchun yetarli huquq yo‘q
                 "Bu buyruq faqat guruh administratorlari tomonidan bajarilishi mumkin."
 
 
-
 # Lichkadan yoki guruhdan /start bosilganda salomlashuv xabarini yuboradi
 @group_router.message(Command("start"))
 async def start_command(message: types.Message):
@@ -30,19 +29,33 @@ async def start_command(message: types.Message):
         if not _user.is_private:
             await _user.update_is_private(is_private=True)
 
-    text = (
-        "👋 Assalomu alaykum!\n\n"
-        "Men guruhingizni tartibga solishda yordam beruvchi botman.\n\n"
-        "Guruhingizda admin qiling va /activate buyrug'ini yuboring, yordam kerak bo'lsa /help dan foydalaning\n\n"
-        "*Mening imkoniyatlarim:*\n"
-        "📌 *KANALGA OBUNA SHART* - Foydalanuvchilar kanalga a’zo bo‘lmaguncha yozish huquqiga ega bo‘lmaydi.\n"
-        "👥 *GURUHGA ODAM TAKLIF QILISH* - Foydalanuvchilar ma’lum miqdordagi odamni guruhga taklif qilmaguncha yozishlari cheklanadi.\n"
-        "🗑 *KIRDI-CHIQTI XABARLARINI O‘CHIRISH* - Guruhga kim qo‘shilgani yoki chiqib ketgani haqidagi xabarlarni avtomatik o‘chirib boraman.\n"
-        "⛔️ *REKLAMA VA SPAMGA QARSHI HIMOYA* - Guruhingizni nomaqbul reklama va spamdan himoya qilaman.\n"
-        "🔞 *SO‘KINISH VA HAQORATLARNI O‘CHIRISH* - Axloqsiz va haqoratli so‘zlarni aniqlab, ularni avtomatik o‘chiraman.\n"
-        "🚫 *KANAL NOMIDAN YOZISHNI TAQIQLASH* - Foydalanuvchilarning kanal nomidan yozishiga ruxsat bermayman.\n"
-        "🔹 Botni guruhingizga qo‘shib, tartibni ta’minlang!"
-    )
+    text = """
+👋 Assalomu alaykum !
+
+🤖Men guruhingizni tartibga solishda yordam beruvchi botman.
+
+1) 📣 KANALGA ODAM YIGʻISH - Man guruhingizdagi azolarni kanalga azo bolmaguncha yozdirmayman ❗️
+
+2) 👥 GURUHGA ODAM YIGʻISH- Man guruhingizga azolarni odam qoshmaguncha yozdirmayman👮‍♂️
+
+2) 🗑 KIRDI-CHIQTI TOZALASH - Man guruhdagi foydalanuvchi guruhga qoʻshildi yokiguruhni tark etdi degan xabarlarini oʻchiraman.
+
+3) 📊 XISOBLAB SANAYDI - Man Guruhga kim qancha odam qo'shganligini aytib beraman
+
+4) ⛔️REKLAMA 🚯SPAM 🚫SSILKA -arab va reklamalarni, ssilkalani guruhlarda ochirib beraman👨🏻‍✈️
+
+5) 🔞 SOKINMANG- Sokinish, Xaqoratli, Axloqsiz sozlarni ochirishda yordam beradi
+
+6) ❌ KANAL NOMIDAN YOZISHNI TAQIQLIMAN 
+
+
+👨🏻‍💻 Bot guruhda ADMIN bo`lsa ishlaydi !
+
+👉 /help - 🔖 TEKSLI QOLLANMA
+
+🎥 @Video_qollanma_kanali
+"""
+
 
     # Inline tugma yaratish
     start_button = InlineKeyboardButton(
@@ -54,7 +67,6 @@ async def start_command(message: types.Message):
     sm = await message.bot.send_message(
         chat_id=message.chat.id,  # Guruh yoki foydalanuvchi chat ID-si
         text=text,
-        parse_mode="Markdown",
         reply_markup=keyboard
     )
     asyncio.create_task(delete_after_delay(message.chat.id, sm.message_id, 60))
@@ -715,26 +727,38 @@ async def add_points_to_user(message: types.Message):
 @group_router.message(Command("help"))
 async def help_bot(message: types.Message):
     help_text = """
-    🤖 <b>Bot buyruqlari:</b>  
+🤖 Bot buyruqlari:
 
-    🔹 <code>/kanal [username]</code> – Kanalni qo‘shish.  
-    🔹 <code>/kanal_off</code> – Kanalni olib tashlash.  
-    🔹 <code>/activate</code> – Botni faollashtirish.  
-    🔹 <code>/deactivate</code> – Botni o‘chirish.  
-    🔹 <code>/word [so‘z]</code> – Bloklangan so‘z qo‘shish.  
-    🔹 <code>/guruh [son]</code> – Yozish uchun minimal odam sonini belgilash.  
-    🔹 <code>/guruh 0</code> – Yozish uchun minimal odam sonini olib tashlash.  
-    🔹 <code>/start</code> – Botni ishga tushirish.  
-    🔹 <code>/help</code> – Buyruqlarni ko‘rish.  
-    🔹 <code>/meni</code> – Taklif qilgan odamlaringiz soni.  
-    🔹 <code>/sizni</code> – Reply yoki ID orqali kim qancha odam qo‘shganini ko‘rish.  
-    🔹 <code>/bal [son]</code> – Reply qilingan foydalanuvchiga ball qo‘shish.  
-    🔹 <code>/nol</code> – Reply qilingan foydalanuvchi ballini 0 qilish.  
-    🔹 <code>/del</code> – Guruhdagi barcha balllarni 0 qilish.  
-    🔹 <code>/top</code> – Eng ko‘p odam qo‘shgan 10 ta foydalanuvchini ko‘rish.  
+<code>/activate</code> – Botni faollashtirish.
+<code>/deactivate</code> – Botni o‘chirish.
 
-    ❓ <b>Savollar bo‘lsa, administratorga murojaat qiling!</b>
-    """
+📣 KANALGA ODAM YIGʻISH
+/kanal @LiderAvtoUz  - Kanalga odam yigʻishni ulash, guruhga junatasiz !
+
+❗️eslatma: - @LiderAvtoUz ga kanalingiz useri
+/kanal_off - o'chirish
+_________________________
+
+👥GURUHGA ISTAGANCHA ODAM YIGISH
+
+/guruh 5 - majburiy odam qo'shishni yoqish  !
+
+❗️Eslatma: 5 soni o'rniga istagan raqamizni yozib jonatishiz mumkin!
+
+/guruh 0 - majburiy odam qo'shishni o'chirib qoyish uchun!
+___________________________
+
+📊GURUHGA KIM QANCHA ODAM QO'SHGANLIGINI ANIQLASH !
+_
+/bal - 🎁Bal berib odam qo'shganlik sonini ko'paytirish!
+/meni - 📊Siz qo'shgan odamlar soni!
+/sizni - 📈Aynan 1 odamning, guruhga qo'shgan odamlar soni!
+/top  - 🏆Eng ko'p odam qo'shgan 10 talik!
+/nol - 🪓Aynan 1 odam malumotini 0 ga tushirish!
+/del - 🗑Barcha odam qo'shganlar malumotini tozalash!
+
+👨🏻‍✈️ Bot guruhda ADMIN bo'lsa ishlaydi !
+"""
 
     sm = await message.bot.send_message(
         chat_id=message.chat.id,

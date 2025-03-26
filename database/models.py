@@ -207,6 +207,20 @@ class BlockedWord(Base):
             await session.commit()
             return new_word
 
+    @classmethod
+    async def delete(cls, word: str):
+        async with AsyncSessionLocal() as session:
+            # Bazadan so‘zni topamiz
+            stmt = select(cls).where(cls.word == word)
+            result = await session.execute(stmt)
+            word_obj = result.scalar_one_or_none()
+
+            if word_obj:
+                await session.delete(word_obj)
+                await session.commit()
+                return True  # O‘chirildi
+            return False  # So‘z topilmadi
+
 
 class Invite(Base):
     __tablename__ = "invites"
