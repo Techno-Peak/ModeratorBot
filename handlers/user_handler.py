@@ -145,7 +145,7 @@ async def handle_message_user(message: Message):
                 chat_id=message.chat.id,
                 text=f"❗ {user_mention}, siz hali guruhga kerakli odam sonini qo‘shmagansiz.\n\n"
                 f"📢 Yana {remaining} ta odam taklif qilishingiz kerak.\n\n"
-                f"/my_count - Men qo'shgan odamlar soni!",
+                f"/meni - Men qo'shgan odamlar soni!",
                 parse_mode="HTML"
             )
             await delete_message(message)
