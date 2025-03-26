@@ -69,7 +69,8 @@ async def start_command(message: types.Message):
         text=text,
         reply_markup=keyboard
     )
-    asyncio.create_task(delete_after_delay(message.chat.id, sm.message_id, 60))
+    if not message.chat.type == "private":
+        asyncio.create_task(delete_after_delay(message.chat.id, sm.message_id, 60))
     await delete_message(message)
 
 
