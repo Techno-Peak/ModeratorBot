@@ -44,10 +44,14 @@ async def handle_message_user(message: Message):
 
 
         if message.left_chat_member:
+
+            print('left -------- ' *10)
             await delete_message(message)
             return
 
         if message.new_chat_members:
+            print('new -------- ' *10)
+
             invite = await Invite.get_invite(
                 group_chat_id=message.chat.id,
                 user_chat_id=message.from_user.id
