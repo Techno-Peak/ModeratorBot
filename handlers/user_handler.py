@@ -57,9 +57,6 @@ async def handle_message_user(message: Message):
             await delete_message(message)
             return
 
-        if message.left_chat_member or message.new_chat_members:
-            await delete_message(message)
-
         chat_admins = await message.bot.get_chat_administrators(message.chat.id)
         admin_ids = [admin.user.id for admin in chat_admins]
         _user = await User.get_user(message.from_user.id)

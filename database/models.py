@@ -254,36 +254,12 @@ class Invite(Base):
     async def add_invite(self, invited_chat_id: int):
         """Agar invited_chat_id oldin taklif qilingan bo‘lsa, qo‘shilmaydi."""
         async with AsyncSessionLocal() as session:
-            try:
-                # ✅ Avval taklif qilinganlarni ro‘yxat sifatida olish
-                invited_ids = {history.invited_chat_id for history in self.histories}
-                for history in self.histories:
-                    if history.invited_chat_id == invited_chat_id \
-                        and history.group_chat_id == self.group_chat_id:
-                        return self
-
-                    if self.user_chat_id == invited_chat_id:
-                        return self
-
-                if invited_chat_id in invited_ids:
-                    return self  # Agar mavjud bo'lsa, qo‘shmaymiz
-            except Exception as e:
-                return self
-
             # ✅ Yangi odamni qo‘shish
             self.count += 1
             session.add(self)
-
-            history = InviteHistory(
-                invite_id=self.id,
-                user_chat_id=self.user_chat_id,
-                invited_chat_id=invited_chat_id,
-                group_chat_id=self.group_chat_id
-            )
-            session.add(history)
-
             await session.commit()
             return self
+
 
     @classmethod
     async def get_top_invites(cls, group_chat_id: int, limit: int = 10):
