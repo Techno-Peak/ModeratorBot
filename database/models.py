@@ -252,14 +252,11 @@ class Invite(Base):
             return invite
 
     async def add_invite(self, invited_chat_id: int):
-        """Agar invited_chat_id oldin taklif qilingan bo‘lsa, qo‘shilmaydi."""
         async with AsyncSessionLocal() as session:
-            invite = await session.get(Invite, self.id)
-            if invite:
-                invite.count += 1
-                session.add(invite)
-                await session.commit()
-                return invite
+            self.count += 1
+            session.add(self)  # ✅ Sessionga bog‘lash
+            await session.commit()
+            return self
 
 
     @classmethod
