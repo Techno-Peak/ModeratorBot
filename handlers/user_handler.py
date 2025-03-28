@@ -1,7 +1,9 @@
 import asyncio
 import re
 from aiogram import Router
-from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, ChatMember
+from aiogram.filters import ChatMemberUpdatedFilter
+from aiogram.filters.chat_member_updated import _MemberStatusMarker, IS_NOT_MEMBER, MEMBER
+from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, ChatMember, ChatMemberUpdated
 from aiogram.enums import ChatMemberStatus
 from database.models import User, Group, BlockedWord, Invite
 from config import bot
@@ -49,15 +51,8 @@ async def handle_message_user(message: Message):
             await delete_message(message)
             return
 
-        if message.new_chat_members:
-            print('new -------- ' *10)
 
-            invite = await Invite.get_invite(
-                group_chat_id=message.chat.id,
-                user_chat_id=message.from_user.id
-            )
-            for new_member in message.new_chat_members:
-                invite = await invite.add_invite(invited_chat_id=new_member.id)
+        if message.new_chat_members:
             await delete_message(message)
             return
 
@@ -293,3 +288,21 @@ async def is_blocked_message(text: str) -> bool:
     tasks = [contains_blocked_word(text.lower(), chunk) for chunk in word_chunks]
     results = await asyncio.gather(*tasks)
     return any(results)
+
+
+@user_router.chat_member(ChatMemberUpdatedFilter(member_status_changed=IS_NOT_MEMBER >> MEMBER))
+async def track_user_additions(event: ChatMemberUpdated):
+    """Guruhga yangi foydalanuvchi qo‘shilganda uni kim taklif qilganini tekshiradi va bazaga saqlaydi."""
+    inviter = event.from_user.id if event.from_user else None
+    added_user = event.new_chat_member.user.id
+    group_chat_id = event.chat.id
+    if inviter:
+        # Taklif qilgan odamni bazadan olish yoki yaratish
+        invite = await Invite.get_invite(group_chat_id=group_chat_id, user_chat_id=inviter)
+        invite = await invite.add_invite(invited_chat_id=added_user)
+
+        print(f"✅ Foydalanuvchi {added_user} {inviter} tomonidan qo‘shildi.")
+        print(f"📊 {inviter} umumiy takliflar soni: {invite.count}")
+    else:
+        print(f"❗️ Foydalanuvchi {added_user} o‘zi qo‘shildi yoki kim tomonidan qo‘shilgani noma’lum.")
+
