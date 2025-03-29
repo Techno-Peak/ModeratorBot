@@ -67,13 +67,43 @@ async def handle_message_user(message: Message):
             await delete_message(message)
             return
         
-        if _group and _group.required_channel and await is_user_subscribed(_group.required_channel, tg_user.id):
-            if tg_user.first_name == 'Channel':
-                try:
-                    await delete_message(message)
-                except Exception as e:
-                    print(f"Kanal xabarini o‘chirishda xatolik: {e}")
-                return
+        if _group and _group.required_channel and not await is_user_subscribed(_group.required_channel, tg_user.id):
+            try:
+                chat = await bot.get_chat(_group.required_channel)
+                if chat.username:
+                    channel_url = f"https://t.me/{chat.username}"
+                else:
+                    channel_url = None
+            except Exception as e:
+                channel_url = None
+
+            if channel_url:
+                keyboard = InlineKeyboardMarkup(
+                    inline_keyboard=[
+                        [InlineKeyboardButton(text="📢 Obuna bo‘lish", url=channel_url)]
+                    ]
+                )
+
+                sm = await message.bot.send_message(
+                    chat_id=message.chat.id,
+                    text=(
+                        f"📢 <b>Diqqat, <a href=\"tg://user?id={message.from_user.id}\">{message.from_user.full_name}</a>!</b>\n\n"
+                        "Guruhdan to‘liq foydalanish uchun avval quyidagi kanalga a'zo bo‘lishingiz kerak.👇"
+                    ),
+                    parse_mode="HTML",
+                    disable_web_page_preview=True,
+                    reply_markup=keyboard
+                )
+
+                await delete_message(message)
+                asyncio.create_task(delete_after_delay(sm.chat.id, sm.message_id, AUTO_DELETE_TIME_INTERVAL))
+
+        if tg_user.first_name == 'Channel':
+            try:
+                await delete_message(message)
+            except Exception as e:
+                print(f"Kanal xabarini o‘chirishda xatolik: {e}")
+            return
 
         if user:
             if message.forward_date:
