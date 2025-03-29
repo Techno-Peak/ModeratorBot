@@ -97,6 +97,7 @@ async def handle_message_user(message: Message):
 
                 await delete_message(message)
                 asyncio.create_task(delete_after_delay(sm.chat.id, sm.message_id, AUTO_DELETE_TIME_INTERVAL))
+                return
 
         if tg_user.first_name == 'Channel':
             try:
